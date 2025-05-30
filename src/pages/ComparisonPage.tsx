@@ -107,7 +107,8 @@ const ComparisonPage: React.FC = () => {
           isLoading: false
         };
       }
-      setColumns(updatedColumns);
+      // Update columns after each API call to show progress
+      setColumns([...updatedColumns]);
     }
   };
 
