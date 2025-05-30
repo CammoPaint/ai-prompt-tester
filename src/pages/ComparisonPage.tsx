@@ -35,7 +35,7 @@ const ComparisonPage: React.FC = () => {
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved" replace />;
+    return <Navigate to="/saved\" replace />;
   }
 
   const providers = [
