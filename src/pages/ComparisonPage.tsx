@@ -35,7 +35,7 @@ const ComparisonPage: React.FC = () => {
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved\" replace />;
+    return <Navigate to="/saved" replace />;
   }
 
   const providers = [
@@ -70,16 +70,16 @@ const ComparisonPage: React.FC = () => {
     const validColumns = columns.filter(col => col.provider && col.model);
     if (validColumns.length === 0) return;
 
+    // Set loading state for all valid columns
     setColumns(prev => prev.map(col => 
       col.provider && col.model 
         ? { ...col, isLoading: true, error: undefined, response: undefined }
         : col
     ));
 
-    const updatedColumns = [...columns];
-    for (let i = 0; i < columns.length; i++) {
-      const col = columns[i];
-      if (!col.provider || !col.model) continue;
+    // Run all API calls in parallel
+    const promises = columns.map(async (col, index) => {
+      if (!col.provider || !col.model) return null;
 
       try {
         const startTime = performance.now();
@@ -96,23 +96,30 @@ const ComparisonPage: React.FC = () => {
         });
         const endTime = performance.now();
 
-        updatedColumns[i] = {
-          ...col,
-          response: response.content,
-          tokenUsage: response.tokenUsage,
-          responseTime: Math.round(endTime - startTime) / 1000, // Convert to seconds
-          isLoading: false
-        };
+        // Update only this specific column
+        setColumns(prev => prev.map((c, i) => 
+          i === index ? {
+            ...c,
+            response: response.content,
+            tokenUsage: response.tokenUsage,
+            responseTime: Math.round(endTime - startTime) / 1000,
+            isLoading: false
+          } : c
+        ));
       } catch (error) {
-        updatedColumns[i] = {
-          ...col,
-          error: `Failed to get response from ${col.provider}`,
-          isLoading: false
-        };
+        // Update error state for this specific column
+        setColumns(prev => prev.map((c, i) => 
+          i === index ? {
+            ...c,
+            error: `Failed to get response from ${col.provider}`,
+            isLoading: false
+          } : c
+        ));
       }
-      // Update columns after each API call to show progress
-      setColumns([...updatedColumns]);
-    }
+    });
+
+    // Wait for all promises to complete
+    await Promise.all(promises);
   };
 
   const canCompare = columns.some(col => col.provider && col.model);
