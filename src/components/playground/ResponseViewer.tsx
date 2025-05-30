@@ -58,14 +58,25 @@ const ResponseViewer: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center space-x-2 overflow-hidden">
+        <div className="flex items-center space-x-3">
           <span className={`text-xs ${getProviderColor(response.provider)}`}>
             {response.provider} · {response.model}
           </span>
           {response.tokenUsage && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {response.tokenUsage.totalTokens} tokens
-            </span>
+            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+              <span title="Input tokens" className="flex items-center">
+                <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
+                {response.tokenUsage.promptTokens}
+              </span>
+              <span title="Output tokens" className="flex items-center">
+                <span className="w-2 h-2 rounded-full bg-secondary-400 mr-1"></span>
+                {response.tokenUsage.completionTokens}
+              </span>
+              <span title="Total tokens" className="flex items-center font-medium">
+                <span className="w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
+                {response.tokenUsage.totalTokens}
+              </span>
+            </div>
           )}
         </div>
         
