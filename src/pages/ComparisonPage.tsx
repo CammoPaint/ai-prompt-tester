@@ -29,7 +29,7 @@ const ComparisonPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   if (!prompt) {
-    return <Navigate to="/saved" replace />;
+    return <Navigate to="/saved\" replace />;
   }
 
   const providers = [
