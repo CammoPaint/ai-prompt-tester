@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AIResponse, AIProvider, SavedPrompt } from '../types';
 import { sendPrompt } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
 import { getProviderColor } from '../utils/theme';
 import { ArrowLeft, Loader2, Plus, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 interface ComparisonColumn {
   provider: AIProvider | '';
@@ -32,7 +35,7 @@ const ComparisonPage: React.FC = () => {
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved\" replace />;
+    return <Navigate to="/saved" replace />;
   }
 
   const providers = [
@@ -131,10 +134,10 @@ const ComparisonPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex space-x-4 mb-4">
+      <div className="flex space-x-4 mb-4 overflow-x-auto pb-4">
         {columns.map((column, index) => (
-          <div key={index} className="flex-1 min-w-0">
-            <div className="card">
+          <div key={index} className="flex-1 min-w-[300px]">
+            <div className="card h-full">
               <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium">Column {index + 1}</h3>
@@ -203,7 +206,7 @@ const ComparisonPage: React.FC = () => {
                   <div>
                     {column.tokenUsage && (
                       <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <span title="Input tokens\" className="flex items-center">
+                        <span title="Input tokens" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
                           {column.tokenUsage.promptTokens}
                         </span>
@@ -218,7 +221,12 @@ const ComparisonPage: React.FC = () => {
                       </div>
                     )}
                     <div className="prose dark:prose-invert prose-sm max-w-none">
-                      {column.response}
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={[rehypeRaw]}
+                      >
+                        {column.response}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 ) : (
