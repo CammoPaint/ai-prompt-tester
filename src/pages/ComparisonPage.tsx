@@ -5,7 +5,7 @@ import { sendPrompt } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
 import { getProviderColor } from '../utils/theme';
-import { ArrowLeft, Loader2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, X, Clock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -19,6 +19,7 @@ interface ComparisonColumn {
     completionTokens: number;
     totalTokens: number;
   };
+  responseTime?: number;
   error?: string;
   isLoading?: boolean;
 }
@@ -30,12 +31,11 @@ const ComparisonPage: React.FC = () => {
   const { apiKeys } = useAuthStore();
   const [columns, setColumns] = useState<ComparisonColumn[]>([
     { provider: '', model: '' },
-    { provider: '', model: '' },
     { provider: '', model: '' }
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved\" replace />;
+    return <Navigate to="/saved" replace />;
   }
 
   const providers = [
@@ -82,6 +82,7 @@ const ComparisonPage: React.FC = () => {
       if (!col.provider || !col.model) continue;
 
       try {
+        const startTime = performance.now();
         const response = await sendPrompt({
           systemPrompt: prompt.systemPrompt,
           userPrompt: prompt.userPrompt,
@@ -93,11 +94,13 @@ const ComparisonPage: React.FC = () => {
             max_tokens: 2048
           }
         });
+        const endTime = performance.now();
 
         updatedColumns[i] = {
           ...col,
           response: response.content,
           tokenUsage: response.tokenUsage,
+          responseTime: Math.round(endTime - startTime) / 1000, // Convert to seconds
           isLoading: false
         };
       } catch (error) {
@@ -142,7 +145,7 @@ const ComparisonPage: React.FC = () => {
               <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-medium">Column {index + 1}</h3>
-                  {columns.length > 1 && (
+                  {columns.length > 2 && (
                     <button
                       onClick={() => removeColumn(index)}
                       className="p-1 text-gray-500 hover:text-error-600 dark:text-gray-400 dark:hover:text-error-400"
@@ -205,22 +208,28 @@ const ComparisonPage: React.FC = () => {
                   </div>
                 ) : column.response ? (
                   <div>
-                    {column.tokenUsage && (
-                      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <span title="Input tokens\" className="flex items-center">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span title="Input tokens" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
-                          {column.tokenUsage.promptTokens}
+                          {column.tokenUsage?.promptTokens}
                         </span>
                         <span title="Output tokens" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-secondary-400 mr-1"></span>
-                          {column.tokenUsage.completionTokens}
+                          {column.tokenUsage?.completionTokens}
                         </span>
                         <span title="Total tokens" className="flex items-center font-medium">
                           <span className="w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
-                          {column.tokenUsage.totalTokens}
+                          {column.tokenUsage?.totalTokens}
                         </span>
                       </div>
-                    )}
+                      {column.responseTime && (
+                        <span title="Response time" className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {column.responseTime.toFixed(1)}s
+                        </span>
+                      )}
+                    </div>
                     <div className="prose dark:prose-invert prose-sm max-w-none">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
