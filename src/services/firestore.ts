@@ -6,9 +6,10 @@ const db = getFirestore(app);
 
 export const savePromptToFirestore = async (prompt: SavedPrompt) => {
   try {
+    const { id, ...promptData } = prompt;
     const promptsRef = collection(db, 'prompts');
     const docRef = await addDoc(promptsRef, {
-      ...prompt,
+      ...promptData,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -23,9 +24,10 @@ export const updatePromptInFirestore = async (
   prompt: SavedPrompt
 ) => {
   try {
+    const { id, ...promptData } = prompt;
     const promptRef = doc(db, 'prompts', promptId);
     await setDoc(promptRef, {
-      ...prompt,
+      ...promptData,
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (error) {
