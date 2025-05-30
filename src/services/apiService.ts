@@ -86,6 +86,7 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
   
   const config = createApiConfig(provider, apiKey);
   const requestData = formatRequest(promptState);
+  const startTime = performance.now();
   
   try {
     const response = await fetch(config.baseUrl, {
@@ -100,6 +101,7 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
     }
     
     const data = await response.json();
+    const endTime = performance.now();
     
     // Extract token usage information
     const tokenUsage = data.usage ? {
@@ -118,7 +120,8 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
       timestamp: Date.now(),
       provider,
       model,
-      tokenUsage
+      tokenUsage,
+      responseTime: (endTime - startTime) / 1000 // Convert to seconds
     };
   } catch (error) {
     if (error instanceof Error) {

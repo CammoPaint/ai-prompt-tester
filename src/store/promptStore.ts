@@ -122,6 +122,7 @@ export const usePromptStore = create<PromptStoreState>()(
           model: currentPrompt.modelConfig.model,
           response: response?.content ? response.content.trim() : undefined,
           tokenUsage: response?.tokenUsage,
+          responseTime: response?.responseTime,
           createdAt: existingPrompt?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -184,7 +185,8 @@ export const usePromptStore = create<PromptStoreState>()(
                 promptTokens: 0,
                 completionTokens: 0,
                 totalTokens: 0
-              }
+              },
+              responseTime: promptToLoad.responseTime || 0
             } : null,
             error: null
           }));

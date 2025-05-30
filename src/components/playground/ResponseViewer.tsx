@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Braces, FileJson, FileText, Loader2 } from 'lucide-react';
+import { Braces, FileJson, FileText, Loader2, Clock } from 'lucide-react';
 import { usePromptStore } from '../../store/promptStore';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -62,22 +62,26 @@ const ResponseViewer: React.FC = () => {
           <span className={`text-xs ${getProviderColor(response.provider)}`}>
             {response.provider} · {response.model}
           </span>
-          {response.tokenUsage && (
-            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-              <span title="Input tokens" className="flex items-center">
-                <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
-                {response.tokenUsage.promptTokens}
+          <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+            <span title="Input tokens" className="flex items-center">
+              <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
+              {response.tokenUsage.promptTokens}
+            </span>
+            <span title="Output tokens" className="flex items-center">
+              <span className="w-2 h-2 rounded-full bg-secondary-400 mr-1"></span>
+              {response.tokenUsage.completionTokens}
+            </span>
+            <span title="Total tokens" className="flex items-center font-medium">
+              <span className="w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
+              {response.tokenUsage.totalTokens}
+            </span>
+            {response.responseTime && (
+              <span title="Response time" className="flex items-center">
+                <Clock className="w-3 h-3 mr-1" />
+                {response.responseTime.toFixed(1)}s
               </span>
-              <span title="Output tokens" className="flex items-center">
-                <span className="w-2 h-2 rounded-full bg-secondary-400 mr-1"></span>
-                {response.tokenUsage.completionTokens}
-              </span>
-              <span title="Total tokens" className="flex items-center font-medium">
-                <span className="w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
-                {response.tokenUsage.totalTokens}
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
         <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
