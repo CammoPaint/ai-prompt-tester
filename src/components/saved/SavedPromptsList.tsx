@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Trash2 } from 'lucide-react';
+import { Calendar, Clock, Trash2, Split } from 'lucide-react';
 import { usePromptStore } from '../../store/promptStore';
 import { getProviderColor, getProviderBgColor } from '../../utils/theme';
 
@@ -21,6 +21,10 @@ const SavedPromptsList: React.FC = () => {
   const handleLoadPrompt = (promptId: string) => {
     loadSavedPrompt(promptId);
     navigate('/');
+  };
+
+  const handleCompare = (prompt: any) => {
+    navigate('/compare', { state: { prompt } });
   };
   
   return (
@@ -72,6 +76,14 @@ const SavedPromptsList: React.FC = () => {
                 className="flex-1 py-2 text-sm text-center font-medium text-primary-600 dark:text-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 Load Prompt
+              </button>
+              <div className="w-px bg-gray-200 dark:bg-gray-800" />
+              <button
+                onClick={() => handleCompare(prompt)}
+                className="flex-1 py-2 text-sm text-center font-medium text-secondary-600 dark:text-secondary-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Split className="w-4 h-4 inline mr-1" />
+                Compare
               </button>
               <div className="w-px bg-gray-200 dark:bg-gray-800" />
               <button
