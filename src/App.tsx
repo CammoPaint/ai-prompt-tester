@@ -37,7 +37,7 @@ function App() {
           <Route path="compare" element={<ComparisonPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="login" element={<LoginPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/\" replace />} />
         </Route>
       </Routes>
     </Router>
