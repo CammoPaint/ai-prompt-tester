@@ -16,19 +16,19 @@ const ResponseViewer: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center text-gray-500 dark:text-gray-400">
-        <Loader2 className="w-8 h-8 animate-spin mb-4" />
-        <p>Waiting for response...</p>
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+        <p className="text-sm">Waiting for response...</p>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="flex flex-col h-full items-center justify-center text-error-600 dark:text-error-400 px-4">
-        <div className="p-6 bg-error-50 dark:bg-error-900/20 rounded-lg max-w-md text-center">
-          <h3 className="text-lg font-medium mb-2">Error</h3>
-          <p>{error}</p>
+      <div className="p-4 text-error-600 dark:text-error-400">
+        <div className="p-3 bg-error-50 dark:bg-error-900/20 rounded-lg text-center">
+          <h3 className="text-sm font-medium mb-1">Error</h3>
+          <p className="text-xs">{error}</p>
         </div>
       </div>
     );
@@ -36,9 +36,9 @@ const ResponseViewer: React.FC = () => {
   
   if (!response) {
     return (
-      <div className="flex flex-col h-full items-center justify-center text-gray-500 dark:text-gray-400">
-        <Braces className="w-8 h-8 mb-4" />
-        <p>Submit a prompt to see the response</p>
+      <div className="flex items-center justify-center p-4 text-gray-500 dark:text-gray-400">
+        <Braces className="w-5 h-5 mr-2" />
+        <p className="text-sm">Submit a prompt to see the response</p>
       </div>
     );
   }
@@ -56,16 +56,15 @@ const ResponseViewer: React.FC = () => {
   }
   
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-lg font-semibold">Response</h2>
-          <span className={`text-sm ${getProviderColor(response.provider)}`}>
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center space-x-2 overflow-hidden">
+          <span className={`text-xs ${getProviderColor(response.provider)}`}>
             {response.provider} · {response.model}
           </span>
           {response.tokenUsage && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Tokens: {response.tokenUsage.promptTokens} prompt + {response.tokenUsage.completionTokens} completion = {response.tokenUsage.totalTokens} total
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {response.tokenUsage.totalTokens} tokens
             </span>
           )}
         </div>
@@ -74,7 +73,7 @@ const ResponseViewer: React.FC = () => {
           <button
             type="button"
             onClick={() => setView('formatted')}
-            className={`flex items-center text-xs px-2 py-1 rounded ${
+            className={`flex items-center text-xs px-2 py-0.5 rounded ${
               view === 'formatted' 
                 ? 'bg-white dark:bg-gray-700 shadow-sm' 
                 : 'text-gray-600 dark:text-gray-400'
@@ -86,7 +85,7 @@ const ResponseViewer: React.FC = () => {
           <button
             type="button"
             onClick={() => setView('raw')}
-            className={`flex items-center text-xs px-2 py-1 rounded ${
+            className={`flex items-center text-xs px-2 py-0.5 rounded ${
               view === 'raw' 
                 ? 'bg-white dark:bg-gray-700 shadow-sm' 
                 : 'text-gray-600 dark:text-gray-400'
@@ -98,52 +97,50 @@ const ResponseViewer: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto">
-        {view === 'raw' ? (
-          <pre className="font-mono text-sm whitespace-pre-wrap p-4 bg-gray-50 dark:bg-gray-900 rounded-md h-full overflow-auto">
-            {response.content}
-          </pre>
-        ) : (
-          <div className="prose dark:prose-invert prose-sm max-w-none p-4 bg-gray-50 dark:bg-gray-900 rounded-md h-full overflow-auto">
-            {isValidJson ? (
-              <SyntaxHighlighter
-                language="json"
-                style={mode === 'dark' ? oneDark : oneLight}
-                customStyle={{ margin: 0, borderRadius: '0.375rem' }}
-              >
-                {JSON.stringify(jsonContent, null, 2)}
-              </SyntaxHighlighter>
-            ) : (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        language={match[1]}
-                        style={mode === 'dark' ? oneDark : oneLight}
-                        customStyle={{ margin: '1em 0', borderRadius: '0.375rem' }}
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-                }}
-              >
-                {response.content}
-              </ReactMarkdown>
-            )}
-          </div>
-        )}
-      </div>
+      {view === 'raw' ? (
+        <pre className="font-mono text-xs whitespace-pre-wrap p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+          {response.content}
+        </pre>
+      ) : (
+        <div className="prose dark:prose-invert prose-sm max-w-none p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+          {isValidJson ? (
+            <SyntaxHighlighter
+              language="json"
+              style={mode === 'dark' ? oneDark : oneLight}
+              customStyle={{ margin: 0, borderRadius: '0.375rem' }}
+            >
+              {JSON.stringify(jsonContent, null, 2)}
+            </SyntaxHighlighter>
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <SyntaxHighlighter
+                      language={match[1]}
+                      style={mode === 'dark' ? oneDark : oneLight}
+                      customStyle={{ margin: '0.5em 0', borderRadius: '0.375rem' }}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              }}
+            >
+              {response.content}
+            </ReactMarkdown>
+          )}
+        </div>
+      )}
     </div>
   );
 };

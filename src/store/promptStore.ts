@@ -115,11 +115,11 @@ export const usePromptStore = create<PromptStoreState>()(
         const promptData: SavedPrompt = {
           id: existingPrompt?.id,
           title,
-          systemPrompt: currentPrompt.systemPrompt,
-          userPrompt: currentPrompt.userPrompt,
+          systemPrompt: currentPrompt.systemPrompt.trim(),
+          userPrompt: currentPrompt.userPrompt.trim(),
           provider: currentPrompt.modelConfig.provider,
           model: currentPrompt.modelConfig.model,
-          response: response?.content,
+          response: response?.content ? response.content.trim() : undefined,
           tokenUsage: response?.tokenUsage,
           createdAt: existingPrompt?.createdAt || Date.now(),
           updatedAt: Date.now()

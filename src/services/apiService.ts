@@ -101,12 +101,24 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
     
     const data = await response.json();
     
+    // Extract token usage information
+    const tokenUsage = data.usage ? {
+      promptTokens: data.usage.prompt_tokens,
+      completionTokens: data.usage.completion_tokens,
+      totalTokens: data.usage.total_tokens
+    } : {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0
+    };
+    
     return {
       content: data.choices[0].message.content,
       format: promptState.responseFormat,
       timestamp: Date.now(),
       provider,
-      model
+      model,
+      tokenUsage
     };
   } catch (error) {
     if (error instanceof Error) {
@@ -120,10 +132,10 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
 export const getAvailableModels = (provider: AIProvider): string[] => {
   const models = {
     openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    perplexity: ['llama-3-sonar-70b-chat', 'mixtral-8x7b-instruct', 'sonar-small-chat'],
+    perplexity: ['sonar', 'sonar-pro', 'sonar-reasoning'],
     deepseek: ['deepseek-coder', 'deepseek-chat'],
-    grok: ['grok-1', 'grok-1-mini'],
-    qwen: ['qwen-1.5-72b', 'qwen-1.5-14b', 'qwen-1.5-7b']
+    grok: ['grok-3', 'grok-3-mini'],
+    qwen: ['qwen-plus', 'qwen-turbo']
   };
   
   return models[provider] || [];
