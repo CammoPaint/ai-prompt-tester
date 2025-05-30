@@ -24,6 +24,7 @@ export interface TokenUsage {
 
 export interface SavedPrompt {
   id?: string;
+  userId: string;
   title: string;
   systemPrompt: string;
   userPrompt: string;
@@ -49,13 +50,4 @@ export interface PromptState {
   userPrompt: string;
   responseFormat: ResponseFormat;
   modelConfig: AIModelConfig;
-}
-
-export interface AIResponse {
-  content: string;
-  format: ResponseFormat;
-  timestamp: number;
-  provider: AIProvider;
-  model: string;
-  tokenUsage: TokenUsage;
 }

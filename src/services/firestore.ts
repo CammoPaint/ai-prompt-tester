@@ -4,15 +4,11 @@ import { SavedPrompt, ApiKeys } from '../types';
 
 const db = getFirestore(app);
 
-export const savePromptToFirestore = async (
-  userId: string,
-  prompt: SavedPrompt
-) => {
+export const savePromptToFirestore = async (prompt: SavedPrompt) => {
   try {
     const promptsRef = collection(db, 'prompts');
     const docRef = await addDoc(promptsRef, {
       ...prompt,
-      userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });

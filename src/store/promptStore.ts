@@ -114,6 +114,7 @@ export const usePromptStore = create<PromptStoreState>()(
         
         const promptData: SavedPrompt = {
           id: existingPrompt?.id,
+          userId: user.id,
           title,
           systemPrompt: currentPrompt.systemPrompt.trim(),
           userPrompt: currentPrompt.userPrompt.trim(),
@@ -129,7 +130,7 @@ export const usePromptStore = create<PromptStoreState>()(
           if (existingPrompt) {
             await updatePromptInFirestore(existingPrompt.id!, promptData);
           } else {
-            await savePromptToFirestore(user.id, promptData);
+            await savePromptToFirestore(promptData);
           }
           await get().loadPrompts();
         } catch (error) {
