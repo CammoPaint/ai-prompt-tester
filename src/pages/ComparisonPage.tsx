@@ -35,7 +35,7 @@ const ComparisonPage: React.FC = () => {
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved" replace />;
+    return <Navigate to="/saved\" replace />;
   }
 
   const providers = [
@@ -206,7 +206,7 @@ const ComparisonPage: React.FC = () => {
                   <div>
                     {column.tokenUsage && (
                       <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-                        <span title="Input tokens" className="flex items-center">
+                        <span title="Input tokens\" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
                           {column.tokenUsage.promptTokens}
                         </span>
