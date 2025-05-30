@@ -7,6 +7,7 @@ import PlaygroundPage from './pages/PlaygroundPage';
 import SavedPromptsPage from './pages/SavedPromptsPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
+import ComparisonPage from './pages/ComparisonPage';
 
 function App() {
   const { setUser } = useAuthStore();
@@ -33,9 +34,10 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<PlaygroundPage />} />
           <Route path="saved" element={<SavedPromptsPage />} />
+          <Route path="compare" element={<ComparisonPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="login" element={<LoginPage />} />
-          <Route path="*" element={<Navigate to="/\" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </Router>
