@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Braces, Moon, Sun, User } from 'lucide-react';
+import { Braces, Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 import { useAuthStore } from '../../store/authStore';
+import UserMenu from '../auth/UserMenu';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const { mode, toggleTheme } = useThemeStore();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   
   return (
     <header className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
@@ -45,13 +46,7 @@ const Header: React.FC = () => {
           </button>
           
           {isAuthenticated ? (
-            <Link 
-              to="/profile" 
-              className="flex items-center space-x-2 py-1 px-3 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-            >
-              <User className="h-4 w-4" />
-              <span className="text-sm font-medium">{user?.name || user?.email?.split('@')[0]}</span>
-            </Link>
+            <UserMenu />
           ) : (
             <Link 
               to="/login" 
