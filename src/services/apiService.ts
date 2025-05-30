@@ -135,8 +135,8 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
 export const getAvailableModels = (provider: AIProvider): string[] => {
   const models = {
     openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    perplexity: ['sonar', 'sonar-pro', 'sonar-reasoning'],
-    deepseek: ['deepseek-coder', 'deepseek-chat'],
+    perplexity: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research', 'r1-1776','llama-2-70b-chat', 'llama-3.1-sonar-small-128k-online'],
+    deepseek: ['deepseek-chat','deepseek-coder'],
     grok: ['grok-3', 'grok-3-mini'],
     qwen: ['qwen-plus', 'qwen-turbo']
   };
