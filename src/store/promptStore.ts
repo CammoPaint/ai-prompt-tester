@@ -122,8 +122,8 @@ export const usePromptStore = create<PromptStoreState>()(
           model: currentPrompt.modelConfig.model,
           response: response?.content ? response.content.trim() : undefined,
           tokenUsage: response?.tokenUsage,
-          createdAt: existingPrompt?.createdAt || Date.now(),
-          updatedAt: Date.now()
+          createdAt: existingPrompt?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         };
         
         try {
@@ -142,7 +142,7 @@ export const usePromptStore = create<PromptStoreState>()(
         set((state) => ({
           savedPrompts: state.savedPrompts.map(prompt => 
             prompt.id === id 
-              ? { ...prompt, ...updates, updatedAt: Date.now() } 
+              ? { ...prompt, ...updates, updatedAt: new Date().toISOString() } 
               : prompt
           )
         })),

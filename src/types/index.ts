@@ -32,8 +32,8 @@ export interface SavedPrompt {
   model: string;
   response?: string;
   tokenUsage?: TokenUsage;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface AIModelConfig {
