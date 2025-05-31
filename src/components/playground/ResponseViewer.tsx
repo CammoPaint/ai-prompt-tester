@@ -88,32 +88,34 @@ const ResponseViewer: React.FC<ResponseViewerProps> = ({ isExpanded = false }) =
           </div>
         </div>
         
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
-          <button
-            type="button"
-            onClick={() => setView('formatted')}
-            className={`flex items-center text-xs px-2 py-0.5 rounded ${
-              view === 'formatted' 
-                ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FileText className="w-3 h-3 mr-1" />
-            Formatted
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('raw')}
-            className={`flex items-center text-xs px-2 py-0.5 rounded ${
-              view === 'raw' 
-                ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <FileJson className="w-3 h-3 mr-1" />
-            Raw
-          </button>
-        </div>
+        {isExpanded && (
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
+            <button
+              type="button"
+              onClick={() => setView('formatted')}
+              className={`flex items-center text-xs px-2 py-0.5 rounded ${
+                view === 'formatted' 
+                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <FileText className="w-3 h-3 mr-1" />
+              Formatted
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('raw')}
+              className={`flex items-center text-xs px-2 py-0.5 rounded ${
+                view === 'raw' 
+                  ? 'bg-white dark:bg-gray-700 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <FileJson className="w-3 h-3 mr-1" />
+              Raw
+            </button>
+          </div>
+        )}
       </div>
       
       {view === 'raw' ? (
