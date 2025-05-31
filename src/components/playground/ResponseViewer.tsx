@@ -9,10 +9,14 @@ import rehypeRaw from 'rehype-raw';
 import { useThemeStore } from '../../store/themeStore';
 import { getProviderColor } from '../../utils/theme';
 
-const ResponseViewer: React.FC = () => {
+interface ResponseViewerProps {
+  isExpanded?: boolean;
+}
+
+const ResponseViewer: React.FC<ResponseViewerProps> = ({ isExpanded = false }) => {
   const { response, isLoading, error } = usePromptStore();
   const { mode } = useThemeStore();
-  const [view, setView] = useState<'formatted' | 'raw'>('formatted');
+  const [view, setView] = useState<'formatted' | 'raw'>(isExpanded ? 'formatted' : 'raw');
   
   if (isLoading) {
     return (
