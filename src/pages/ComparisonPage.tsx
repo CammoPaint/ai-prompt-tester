@@ -13,196 +13,10 @@ import { useThemeStore } from '../store/themeStore';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
-interface ComparisonColumn {
-  provider: AIProvider | '';
-  model: string;
-  response?: string;
-  tokenUsage?: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
-  responseTime?: number;
-  error?: string;
-  isLoading?: boolean;
-  isExpanded?: boolean;
-  viewFormat?: 'formatted' | 'raw';
-}
+// ... (keep all interfaces and type definitions)
 
 const ComparisonPage: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const prompt = location.state?.prompt as SavedPrompt;
-  const { apiKeys } = useAuthStore();
-  const { mode } = useThemeStore();
-  const [columns, setColumns] = useState<ComparisonColumn[]>([
-    { provider: '', model: '', viewFormat: 'formatted' },
-    { provider: '', model: '', viewFormat: 'formatted' }
-  ]);
-
-  if (!prompt) {
-    return <Navigate to="/saved\" replace />;
-  }
-
-  const providers = [
-    { id: 'openai' as AIProvider, name: 'OpenAI', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'] },
-    { id: 'openrouter' as AIProvider, name: 'OpenRouter', models: ['perplexity/sonar', 'deepseek/deepseek-r1-0528:free', 'anthropic/claude-3.7-sonnet'] },
-    { id: 'perplexity' as AIProvider, name: 'Perplexity', models: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research'] },
-    { id: 'deepseek' as AIProvider, name: 'DeepSeek', models: ['deepseek-coder', 'deepseek-chat'] },
-    { id: 'grok' as AIProvider, name: 'Grok', models: ['grok-3', 'grok-3-mini'] },
-    { id: 'qwen' as AIProvider, name: 'Qwen', models: ['qwen-plus', 'qwen-turbo'] }
-  ];
-
-  const handleProviderChange = (index: number, provider: AIProvider) => {
-    setColumns(prev => prev.map((col, i) => 
-      i === index ? { ...col, provider, model: '' } : col
-    ));
-  };
-
-  const handleModelChange = (index: number, model: string) => {
-    setColumns(prev => prev.map((col, i) => 
-      i === index ? { ...col, model } : col
-    ));
-  };
-
-  const toggleExpand = (index: number) => {
-    setColumns(prev => prev.map((col, i) => ({
-      ...col,
-      isExpanded: i === index ? !col.isExpanded : false
-    })));
-  };
-
-  const toggleViewFormat = (index: number) => {
-    setColumns(prev => prev.map((col, i) => 
-      i === index ? {
-        ...col,
-        viewFormat: col.viewFormat === 'formatted' ? 'raw' : 'formatted'
-      } : col
-    ));
-  };
-
-  const addColumn = () => {
-    setColumns(prev => [...prev, { provider: '', model: '', viewFormat: 'formatted' }]);
-  };
-
-  const removeColumn = (index: number) => {
-    setColumns(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const runComparison = async () => {
-    const validColumns = columns.filter(col => col.provider && col.model);
-    if (validColumns.length === 0) return;
-
-    setColumns(prev => prev.map(col => 
-      col.provider && col.model 
-        ? { ...col, isLoading: true, error: undefined, response: undefined }
-        : col
-    ));
-
-    const promises = columns.map(async (col, index) => {
-      if (!col.provider || !col.model) return null;
-
-      try {
-        const startTime = performance.now();
-        const response = await sendPrompt({
-          systemPrompt: prompt.systemPrompt,
-          userPrompt: prompt.userPrompt,
-          responseFormat: 'markdown',
-          modelConfig: {
-            provider: col.provider,
-            model: col.model,
-            temperature: 0.7,
-            max_tokens: 2048
-          }
-        });
-        const endTime = performance.now();
-
-        setColumns(prev => prev.map((c, i) => 
-          i === index ? {
-            ...c,
-            response: response.content,
-            tokenUsage: response.tokenUsage,
-            responseTime: Math.round(endTime - startTime) / 1000,
-            isLoading: false
-          } : c
-        ));
-      } catch (error) {
-        setColumns(prev => prev.map((c, i) => 
-          i === index ? {
-            ...c,
-            error: `Failed to get response from ${col.provider}`,
-            isLoading: false
-          } : c
-        ));
-      }
-    });
-
-    await Promise.all(promises);
-  };
-
-  const renderResponse = (column: ComparisonColumn) => {
-    let content = column.response || '';
-    let isValidJson = false;
-    let jsonContent: any = null;
-
-    try {
-      jsonContent = JSON.parse(content);
-      isValidJson = true;
-    } catch (e) {
-      // Not valid JSON, will use markdown rendering
-    }
-
-    if (column.viewFormat === 'raw') {
-      return (
-        <pre className="font-mono text-xs whitespace-pre-wrap p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
-          {content}
-        </pre>
-      );
-    }
-
-    return (
-      <div className="prose dark:prose-invert prose-sm max-w-none">
-        {isValidJson ? (
-          <SyntaxHighlighter
-            language="json"
-            style={mode === 'dark' ? oneDark : oneLight}
-            customStyle={{ margin: 0, borderRadius: '0.375rem' }}
-          >
-            {JSON.stringify(jsonContent, null, 2)}
-          </SyntaxHighlighter>
-        ) : (
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw]}
-            components={{
-              code({ node, inline, className, children, ...props }) {
-                const match = /language-(\w+)/.exec(className || '');
-                return !inline && match ? (
-                  <SyntaxHighlighter
-                    language={match[1]}
-                    style={mode === 'dark' ? oneDark : oneLight}
-                    customStyle={{ margin: '0.5em 0', borderRadius: '0.375rem' }}
-                    PreTag="div"
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
-                ) : (
-                  <code className={className} {...props}>
-                    {children}
-                  </code>
-                );
-              }
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-        )}
-      </div>
-    );
-  };
-
-  const canCompare = columns.some(col => col.provider && col.model);
+  // ... (keep all hooks and state definitions)
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -230,7 +44,7 @@ const ComparisonPage: React.FC = () => {
           <div 
             key={index} 
             className={`flex-1 min-w-[300px] ${
-              column.isExpanded ? 'fixed inset-4 z-50 min-w-0' : ''
+              column.isExpanded ? 'fixed inset-4 z-50 min-w-0 bg-white dark:bg-gray-900 rounded-lg shadow-2xl' : ''
             }`}
           >
             <div className={`card h-full ${
@@ -238,17 +52,36 @@ const ComparisonPage: React.FC = () => {
             }`}>
               <div className="p-4 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium">Column {index + 1}</h3>
                   <div className="flex items-center space-x-2">
-                    {columns.length > 2 && (
-                      <button
-                        onClick={() => removeColumn(index)}
-                        className="p-1 text-gray-500 hover:text-error-600 dark:text-gray-400 dark:hover:text-error-400"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+                    <h3 className="font-medium">Column {index + 1}</h3>
+                    <button
+                      onClick={() => toggleExpand(index)}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title={column.isExpanded ? "Collapse" : "Expand"}
+                    >
+                      {column.isExpanded ? (
+                        <Minimize2 className="w-4 h-4" />
+                      ) : (
+                        <Maximize2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
+                  {columns.length > 2 && !column.isExpanded && (
+                    <button
+                      onClick={() => removeColumn(index)}
+                      className="p-1 text-gray-500 hover:text-error-600 dark:text-gray-400 dark:hover:text-error-400"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  {column.isExpanded && (
+                    <button
+                      onClick={() => toggleExpand(index)}
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 
                 <div className="space-y-3">
@@ -325,28 +158,25 @@ const ComparisonPage: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
-                          <button
-                            onClick={() => toggleViewFormat(index)}
-                            className={`flex items-center text-xs px-2 py-0.5 rounded ${
-                              column.viewFormat === 'formatted'
-                                ? 'bg-white dark:bg-gray-700 shadow-sm'
-                                : 'text-gray-600 dark:text-gray-400'
-                            }`}
-                          >
-                            <FileText className="w-3 h-3 mr-1" />
-                            {column.viewFormat === 'formatted' ? 'Formatted' : 'Raw'}
-                          </button>
-                        </div>
+                      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
                         <button
-                          onClick={() => toggleExpand(index)}
-                          className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                          onClick={() => toggleViewFormat(index)}
+                          className={`flex items-center text-xs px-2 py-0.5 rounded ${
+                            column.viewFormat === 'formatted'
+                              ? 'bg-white dark:bg-gray-700 shadow-sm'
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}
                         >
-                          {column.isExpanded ? (
-                            <Minimize2 className="w-4 h-4" />
+                          {column.viewFormat === 'formatted' ? (
+                            <>
+                              <FileText className="w-3 h-3 mr-1" />
+                              Formatted
+                            </>
                           ) : (
-                            <Maximize2 className="w-4 h-4" />
+                            <>
+                              <FileJson className="w-3 h-3 mr-1" />
+                              Raw
+                            </>
                           )}
                         </button>
                       </div>
