@@ -117,7 +117,7 @@ const ResponseViewer: React.FC = () => {
           {response.content}
         </pre>
       ) : (
-        <div className="prose dark:prose-invert prose-sm max-w-none p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
+        <div className="prose dark:prose-invert prose-sm max-w-none p-2 bg-gray-50 dark:bg-gray-900 rounded-md overflow-x-auto">
           {isValidJson ? (
             <SyntaxHighlighter
               language="json"
