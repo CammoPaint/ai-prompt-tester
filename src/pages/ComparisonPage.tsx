@@ -13,10 +13,216 @@ import { useThemeStore } from '../store/themeStore';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 
-// ... (keep all interfaces and type definitions)
+interface ComparisonColumn {
+  provider: AIProvider | '';
+  model: string;
+  response: AIResponse | null;
+  error: string | null;
+  isLoading: boolean;
+  isExpanded: boolean;
+  viewFormat: 'formatted' | 'raw';
+  tokenUsage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  responseTime?: number;
+}
+
+interface ProviderOption {
+  id: AIProvider;
+  name: string;
+  models: string[];
+}
+
+const providers: ProviderOption[] = [
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    models: ['gpt-4', 'gpt-3.5-turbo'],
+  },
+  {
+    id: 'anthropic',
+    name: 'Anthropic',
+    models: ['claude-2', 'claude-instant-1'],
+  },
+];
 
 const ComparisonPage: React.FC = () => {
-  // ... (keep all hooks and state definitions)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isDarkMode } = useThemeStore();
+  const { apiKeys } = useAuthStore();
+  const { currentPrompt } = usePromptStore();
+
+  const [columns, setColumns] = useState<ComparisonColumn[]>([
+    {
+      provider: '',
+      model: '',
+      response: null,
+      error: null,
+      isLoading: false,
+      isExpanded: false,
+      viewFormat: 'formatted',
+    },
+    {
+      provider: '',
+      model: '',
+      response: null,
+      error: null,
+      isLoading: false,
+      isExpanded: false,
+      viewFormat: 'formatted',
+    },
+  ]);
+
+  const addColumn = () => {
+    setColumns(prev => [
+      ...prev,
+      {
+        provider: '',
+        model: '',
+        response: null,
+        error: null,
+        isLoading: false,
+        isExpanded: false,
+        viewFormat: 'formatted',
+      },
+    ]);
+  };
+
+  const removeColumn = (index: number) => {
+    setColumns(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const toggleExpand = (index: number) => {
+    setColumns(prev => prev.map((col, i) => ({
+      ...col,
+      isExpanded: i === index ? !col.isExpanded : false,
+    })));
+  };
+
+  const handleProviderChange = (index: number, provider: AIProvider) => {
+    setColumns(prev => prev.map((col, i) => 
+      i === index ? { ...col, provider, model: '' } : col
+    ));
+  };
+
+  const handleModelChange = (index: number, model: string) => {
+    setColumns(prev => prev.map((col, i) => 
+      i === index ? { ...col, model } : col
+    ));
+  };
+
+  const toggleViewFormat = (index: number) => {
+    setColumns(prev => prev.map((col, i) => 
+      i === index ? {
+        ...col,
+        viewFormat: col.viewFormat === 'formatted' ? 'raw' : 'formatted',
+      } : col
+    ));
+  };
+
+  const renderResponse = (column: ComparisonColumn) => {
+    if (!column.response) return null;
+
+    if (column.viewFormat === 'raw') {
+      return (
+        <SyntaxHighlighter
+          language="json"
+          style={isDarkMode ? oneDark : oneLight}
+          className="rounded-lg text-sm"
+        >
+          {JSON.stringify(column.response, null, 2)}
+        </SyntaxHighlighter>
+      );
+    }
+
+    return (
+      <div className="prose dark:prose-invert max-w-none">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              return !inline && match ? (
+                <SyntaxHighlighter
+                  language={match[1]}
+                  style={isDarkMode ? oneDark : oneLight}
+                  PreTag="div"
+                  {...props}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+              ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+        >
+          {column.response.content}
+        </ReactMarkdown>
+      </div>
+    );
+  };
+
+  const canCompare = columns.every(col => col.provider && col.model) && !columns.some(col => col.isLoading);
+
+  const runComparison = async () => {
+    if (!currentPrompt) return;
+
+    const startTime = Date.now();
+
+    setColumns(prev => prev.map(col => ({
+      ...col,
+      isLoading: true,
+      error: null,
+      response: null,
+    })));
+
+    try {
+      const responses = await Promise.all(
+        columns.map(async col => {
+          if (!col.provider || !col.model) {
+            throw new Error('Provider and model must be selected');
+          }
+
+          const response = await sendPrompt({
+            provider: col.provider,
+            model: col.model,
+            prompt: currentPrompt.content,
+            temperature: currentPrompt.temperature,
+          });
+
+          return {
+            response,
+            responseTime: (Date.now() - startTime) / 1000,
+          };
+        })
+      );
+
+      setColumns(prev => prev.map((col, i) => ({
+        ...col,
+        isLoading: false,
+        response: responses[i].response,
+        responseTime: responses[i].responseTime,
+        error: null,
+      })));
+    } catch (error) {
+      setColumns(prev => prev.map(col => ({
+        ...col,
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'An error occurred',
+      })));
+    }
+  };
+
+  if (!currentPrompt) {
+    return <Navigate to="/playground" replace />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
