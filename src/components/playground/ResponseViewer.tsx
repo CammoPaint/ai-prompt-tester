@@ -118,7 +118,7 @@ const ResponseViewer: React.FC<ResponseViewerProps> = ({ isExpanded = false }) =
         )}
       </div>
       
-      {view === 'raw' ? (
+      {(!isExpanded || view === 'raw') ? (
         <pre className="font-mono text-xs whitespace-pre-wrap p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
           {response.content}
         </pre>

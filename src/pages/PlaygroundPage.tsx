@@ -113,7 +113,7 @@ const PlaygroundPage: React.FC = () => {
                     </svg>
                   </button>
                 </div>
-                <ResponseViewer />
+                <ResponseViewer isExpanded={true} />
               </div>
             ) : (
               <div className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
@@ -133,7 +133,7 @@ const PlaygroundPage: React.FC = () => {
                   </button>
                 </div>
                 <div className="h-[200px] overflow-auto">
-                  <ResponseViewer />
+                  <ResponseViewer isExpanded={false} />
                 </div>
               </div>
             )}
