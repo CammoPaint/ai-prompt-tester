@@ -11,6 +11,7 @@ const ApiKeysForm: React.FC = () => {
   
   const providers = [
     { id: 'openai', name: 'OpenAI' },
+    { id: 'openrouter', name: 'OpenRouter' },
     { id: 'perplexity', name: 'Perplexity' },
     { id: 'deepseek', name: 'DeepSeek' },
     { id: 'grok', name: 'Grok' },
@@ -121,16 +122,16 @@ const ApiKeysForm: React.FC = () => {
                 </button>
               </div>
               
-              {id === 'openai' && (
+              {id === 'openrouter' && (
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Get your API key from the{' '}
                   <a
-                    href="https://platform.openai.com/api-keys"
+                    href="https://openrouter.ai/keys"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary-600 dark:text-primary-400 hover:underline"
                   >
-                    OpenAI dashboard
+                    OpenRouter dashboard
                   </a>
                 </div>
               )}

@@ -8,13 +8,14 @@ export interface User {
 
 export interface ApiKeys {
   openai?: string;
+  openrouter?: string;
   perplexity?: string;
   deepseek?: string;
   grok?: string;
   qwen?: string;
 }
 
-export type AIProvider = 'openai' | 'perplexity' | 'deepseek' | 'grok' | 'qwen';
+export type AIProvider = 'openai' | 'openrouter' | 'perplexity' | 'deepseek' | 'grok' | 'qwen';
 
 export interface TokenUsage {
   promptTokens: number;
