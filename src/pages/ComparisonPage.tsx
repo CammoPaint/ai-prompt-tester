@@ -35,12 +35,13 @@ const ComparisonPage: React.FC = () => {
   ]);
 
   if (!prompt) {
-    return <Navigate to="/saved\" replace />;
+    return <Navigate to="/saved" replace />;
   }
 
   const providers = [
     { id: 'openai' as AIProvider, name: 'OpenAI', models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'] },
-    { id: 'perplexity' as AIProvider, name: 'Perplexity', models: ['sonar', 'sonar-pro', 'sonar-reasoning'] },
+    { id: 'openrouter' as AIProvider, name: 'OpenRouter', models: ['perplexity/sonar', 'deepseek/deepseek-r1-0528:free', 'anthropic/claude-3.7-sonnet'] },
+    { id: 'perplexity' as AIProvider, name: 'Perplexity', models: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research'] },
     { id: 'deepseek' as AIProvider, name: 'DeepSeek', models: ['deepseek-coder', 'deepseek-chat'] },
     { id: 'grok' as AIProvider, name: 'Grok', models: ['grok-3', 'grok-3-mini'] },
     { id: 'qwen' as AIProvider, name: 'Qwen', models: ['qwen-plus', 'qwen-turbo'] }
