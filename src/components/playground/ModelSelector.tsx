@@ -39,6 +39,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           className="select text-sm py-1.5"
         >
           <option value="openai">OpenAI</option>
+          <option value="openrouter">OpenRouter</option>
           <option value="perplexity">Perplexity</option>
           <option value="deepseek">DeepSeek</option>
           <option value="grok">Grok</option>
