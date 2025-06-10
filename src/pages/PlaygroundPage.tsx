@@ -22,7 +22,8 @@ const PlaygroundPage: React.FC = () => {
   const handleSubmitPrompt = async () => {
     const { provider } = currentPrompt.modelConfig;
     
-    if (!apiKeys[provider]) {
+    // Skip API key check for Ollama since it runs locally
+    if (provider !== 'ollama' && !apiKeys[provider]) {
       setError(`Please set your ${provider} API key in the settings`);
       return;
     }
