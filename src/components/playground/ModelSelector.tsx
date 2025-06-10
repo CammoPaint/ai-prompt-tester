@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AIModelConfig, AIProvider } from '../../types';
-import { getAvailableModels } from '../../services/apiService';
+import { getAvailableModels, fetchOllamaModels } from '../../services/apiService';
 import { getProviderColor } from '../../utils/theme';
+import { RefreshCw } from 'lucide-react';
 
 interface ModelSelectorProps {
   modelConfig: AIModelConfig;
@@ -12,17 +13,44 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   modelConfig, 
   onChange 
 }) => {
-  const availableModels = useMemo(() => 
-    getAvailableModels(modelConfig.provider), 
-    [modelConfig.provider]
-  );
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [isLoadingOllama, setIsLoadingOllama] = useState(false);
+  
+  const availableModels = useMemo(() => {
+    if (modelConfig.provider === 'ollama') {
+      return ollamaModels.length > 0 ? ollamaModels : getAvailableModels('ollama');
+    }
+    return getAvailableModels(modelConfig.provider);
+  }, [modelConfig.provider, ollamaModels]);
+  
+  const loadOllamaModels = async () => {
+    setIsLoadingOllama(true);
+    try {
+      const models = await fetchOllamaModels();
+      setOllamaModels(models);
+      // If current model is not in the fetched list, select the first available
+      if (models.length > 0 && !models.includes(modelConfig.model)) {
+        onChange({ model: models[0] });
+      }
+    } catch (error) {
+      console.warn('Failed to fetch Ollama models:', error);
+    } finally {
+      setIsLoadingOllama(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (modelConfig.provider === 'ollama') {
+      loadOllamaModels();
+    }
+  }, [modelConfig.provider]);
   
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const provider = e.target.value as AIProvider;
-    const models = getAvailableModels(provider);
+    const models = provider === 'ollama' ? ollamaModels : getAvailableModels(provider);
     onChange({ 
       provider,
-      model: models[0] // Default to first model
+      model: models[0] || '' // Default to first model
     });
   };
   
@@ -44,14 +72,16 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <option value="deepseek">DeepSeek</option>
           <option value="grok">Grok</option>
           <option value="qwen">Qwen</option>
+          <option value="ollama">Local LLM (Ollama)</option>
         </select>
       </div>
       
-      <div>
+      <div className="flex items-center space-x-1">
         <select
           value={modelConfig.model}
           onChange={handleModelChange}
           className={`select text-sm py-1.5 ${getProviderColor(modelConfig.provider)}`}
+          disabled={modelConfig.provider === 'ollama' && isLoadingOllama}
         >
           {availableModels.map(model => (
             <option key={model} value={model}>
@@ -59,6 +89,18 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             </option>
           ))}
         </select>
+        
+        {modelConfig.provider === 'ollama' && (
+          <button
+            type="button"
+            onClick={loadOllamaModels}
+            disabled={isLoadingOllama}
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            title="Refresh Ollama models"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoadingOllama ? 'animate-spin' : ''}`} />
+          </button>
+        )}
       </div>
     </div>
   );

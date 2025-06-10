@@ -2,7 +2,7 @@ import { AIProvider, AIResponse, PromptState, ResponseFormat } from '../types';
 import { useAuthStore } from '../store/authStore';
 
 // Base configuration for API requests
-const createApiConfig = (provider: AIProvider, apiKey: string) => {
+const createApiConfig = (provider: AIProvider, apiKey?: string) => {
   const configs = {
     openai: {
       baseUrl: 'https://api.openai.com/v1/chat/completions',
@@ -47,6 +47,12 @@ const createApiConfig = (provider: AIProvider, apiKey: string) => {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       }
+    },
+    ollama: {
+      baseUrl: 'http://localhost:11434/api/chat',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
   };
   
@@ -57,6 +63,22 @@ const createApiConfig = (provider: AIProvider, apiKey: string) => {
 const formatRequest = (promptState: PromptState) => {
   const { systemPrompt, userPrompt, modelConfig, responseFormat } = promptState;
   const { provider, model, temperature, max_tokens } = modelConfig;
+  
+  if (provider === 'ollama') {
+    // Ollama uses a different API format
+    return {
+      model,
+      messages: [
+        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        { role: 'user', content: userPrompt }
+      ],
+      stream: false,
+      options: {
+        temperature,
+        num_predict: max_tokens
+      }
+    };
+  }
   
   // Common message format for most providers
   const messages = [
@@ -83,13 +105,28 @@ const formatRequest = (promptState: PromptState) => {
   };
 };
 
+// Get available models for Ollama
+const getOllamaModels = async (): Promise<string[]> => {
+  try {
+    const response = await fetch('http://localhost:11434/api/tags');
+    if (!response.ok) {
+      throw new Error('Failed to fetch Ollama models');
+    }
+    const data = await response.json();
+    return data.models?.map((model: any) => model.name) || [];
+  } catch (error) {
+    console.warn('Could not fetch Ollama models:', error);
+    return ['llama2', 'mistral', 'codellama']; // Fallback common models
+  }
+};
+
 // Send request to the selected AI provider
 export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> => {
   const { provider, model } = promptState.modelConfig;
   const apiKeys = useAuthStore.getState().apiKeys;
   const apiKey = apiKeys[provider];
   
-  if (!apiKey) {
+  if (provider !== 'ollama' && !apiKey) {
     throw new Error(`API key for ${provider} is not set`);
   }
   
@@ -105,26 +142,43 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
+      if (provider === 'ollama') {
+        throw new Error(`Ollama Error: ${errorData.error || 'Failed to connect to Ollama. Make sure Ollama is running on localhost:11434'}`);
+      }
       throw new Error(errorData.error?.message || 'Failed to get response from API');
     }
     
     const data = await response.json();
     const endTime = performance.now();
     
-    // Extract token usage information
-    const tokenUsage = data.usage ? {
-      promptTokens: data.usage.prompt_tokens,
-      completionTokens: data.usage.completion_tokens,
-      totalTokens: data.usage.total_tokens
-    } : {
-      promptTokens: 0,
-      completionTokens: 0,
-      totalTokens: 0
-    };
+    let content: string;
+    let tokenUsage: any;
+    
+    if (provider === 'ollama') {
+      // Ollama response format
+      content = data.message?.content || '';
+      tokenUsage = {
+        promptTokens: data.prompt_eval_count || 0,
+        completionTokens: data.eval_count || 0,
+        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
+      };
+    } else {
+      // Standard OpenAI-compatible format
+      content = data.choices[0].message.content;
+      tokenUsage = data.usage ? {
+        promptTokens: data.usage.prompt_tokens,
+        completionTokens: data.usage.completion_tokens,
+        totalTokens: data.usage.total_tokens
+      } : {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0
+      };
+    }
     
     return {
-      content: data.choices[0].message.content,
+      content,
       format: promptState.responseFormat,
       timestamp: Date.now(),
       provider,
@@ -148,8 +202,12 @@ export const getAvailableModels = (provider: AIProvider): string[] => {
     perplexity: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research', 'r1-1776','llama-2-70b-chat', 'llama-3.1-sonar-small-128k-online'],
     deepseek: ['deepseek-chat','deepseek-coder'],
     grok: ['grok-3', 'grok-3-mini'],
-    qwen: ['qwen-plus', 'qwen-turbo']
+    qwen: ['qwen-plus', 'qwen-turbo'],
+    ollama: ['llama2', 'mistral', 'codellama', 'llama3', 'phi', 'gemma'] // Common Ollama models
   };
   
   return models[provider] || [];
 };
+
+// Fetch available Ollama models dynamically
+export const fetchOllamaModels = getOllamaModels;

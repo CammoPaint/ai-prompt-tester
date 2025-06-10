@@ -15,7 +15,7 @@ export interface ApiKeys {
   qwen?: string;
 }
 
-export type AIProvider = 'openai' | 'openrouter' | 'perplexity' | 'deepseek' | 'grok' | 'qwen';
+export type AIProvider = 'openai' | 'openrouter' | 'perplexity' | 'deepseek' | 'grok' | 'qwen' | 'ollama';
 
 export interface TokenUsage {
   promptTokens: number;
