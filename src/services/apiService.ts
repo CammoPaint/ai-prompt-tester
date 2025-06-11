@@ -59,6 +59,9 @@ const createApiConfig = (provider: AIProvider, apiKey?: string) => {
   return configs[provider];
 };
 
+// Check if we're running locally or deployed
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 // Format the API request based on provider
 const formatRequest = (promptState: PromptState) => {
   const { systemPrompt, userPrompt, modelConfig, responseFormat } = promptState;
@@ -107,6 +110,11 @@ const formatRequest = (promptState: PromptState) => {
 
 // Get available models for Ollama
 const getOllamaModels = async (): Promise<string[]> => {
+  // If not running locally, return empty array
+  if (!isLocalhost) {
+    return [];
+  }
+  
   try {
     const response = await fetch('http://localhost:11434/api/tags');
     if (!response.ok) {
@@ -116,7 +124,7 @@ const getOllamaModels = async (): Promise<string[]> => {
     return data.models?.map((model: any) => model.name) || [];
   } catch (error) {
     console.warn('Could not fetch Ollama models:', error);
-    return ['llama2', 'mistral', 'codellama']; // Fallback common models
+    return []; // Return empty array instead of fallback models
   }
 };
 
@@ -125,6 +133,11 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
   const { provider, model } = promptState.modelConfig;
   const apiKeys = useAuthStore.getState().apiKeys;
   const apiKey = apiKeys[provider];
+  
+  // Check if Ollama is being used on a deployed site
+  if (provider === 'ollama' && !isLocalhost) {
+    throw new Error('Ollama is only available when running locally. Please use a cloud-based provider for deployed applications.');
+  }
   
   if (provider !== 'ollama' && !apiKey) {
     throw new Error(`API key for ${provider} is not set`);
@@ -203,7 +216,7 @@ export const getAvailableModels = (provider: AIProvider): string[] => {
     deepseek: ['deepseek-chat','deepseek-coder'],
     grok: ['grok-3', 'grok-3-mini'],
     qwen: ['qwen-plus', 'qwen-turbo'],
-    ollama: ['llama2', 'mistral', 'codellama', 'llama3', 'phi', 'gemma'] // Common Ollama models
+    ollama: isLocalhost ? ['llama2', 'mistral', 'codellama', 'llama3', 'phi', 'gemma'] : [] // Empty array if not localhost
   };
   
   return models[provider] || [];
