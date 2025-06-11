@@ -2,9 +2,21 @@ import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc
 import { app } from './firebase';
 import { SavedPrompt, ApiKeys } from '../types';
 
-const db = getFirestore(app);
+let db: any = null;
+
+if (app) {
+  try {
+    db = getFirestore(app);
+  } catch (error) {
+    console.warn('Firestore initialization failed:', error);
+  }
+}
 
 export const savePromptToFirestore = async (prompt: SavedPrompt) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const { id, ...promptData } = prompt;
     const promptsRef = collection(db, 'prompts');
@@ -23,6 +35,10 @@ export const updatePromptInFirestore = async (
   promptId: string,
   prompt: SavedPrompt
 ) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const { id, ...promptData } = prompt;
     const promptRef = doc(db, 'prompts', promptId);
@@ -36,6 +52,10 @@ export const updatePromptInFirestore = async (
 };
 
 export const getPromptsFromFirestore = async (userId: string) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const promptsRef = collection(db, 'prompts');
     const q = query(promptsRef, where('userId', '==', userId));
@@ -51,6 +71,10 @@ export const getPromptsFromFirestore = async (userId: string) => {
 };
 
 export const deletePromptFromFirestore = async (promptId: string) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const promptRef = doc(db, 'prompts', promptId);
     await deleteDoc(promptRef);
@@ -60,6 +84,10 @@ export const deletePromptFromFirestore = async (promptId: string) => {
 };
 
 export const saveApiKeys = async (userId: string, apiKeys: ApiKeys) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const userRef = doc(db, 'users', userId);
     await setDoc(userRef, { apiKeys }, { merge: true });
@@ -69,6 +97,10 @@ export const saveApiKeys = async (userId: string, apiKeys: ApiKeys) => {
 };
 
 export const getApiKeys = async (userId: string): Promise<ApiKeys> => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);

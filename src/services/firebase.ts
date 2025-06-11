@@ -17,10 +17,30 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Check if Firebase config is properly set
+const isFirebaseConfigured = Object.values(firebaseConfig).every(value => 
+  value && value !== 'undefined' && !value.includes('your_') && !value.includes('demo-')
+);
+
+let app: any = null;
+let auth: any = null;
+
+if (isFirebaseConfigured) {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+  } catch (error) {
+    console.warn('Firebase initialization failed:', error);
+  }
+}
+
+export { app, auth };
 
 export const loginWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -30,6 +50,10 @@ export const loginWithEmail = async (email: string, password: string) => {
 };
 
 export const registerWithEmail = async (email: string, password: string) => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     return result.user;
@@ -39,6 +63,10 @@ export const registerWithEmail = async (email: string, password: string) => {
 };
 
 export const logout = async () => {
+  if (!auth) {
+    throw new Error('Firebase is not configured. Please set up your Firebase environment variables.');
+  }
+  
   try {
     await signOut(auth);
   } catch (error: any) {
@@ -47,5 +75,11 @@ export const logout = async () => {
 };
 
 export const onAuthStateChange = (callback: (user: FirebaseUser | null) => void) => {
+  if (!auth) {
+    // If Firebase is not configured, call callback with null user
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
+  
   return onAuthStateChanged(auth, callback);
 };
