@@ -26,7 +26,6 @@ export interface Workspace {
   id: string;
   userId: string;
   name: string;
-  description?: string;
   systemPrompt: string;
   provider: AIProvider;
   model: string;

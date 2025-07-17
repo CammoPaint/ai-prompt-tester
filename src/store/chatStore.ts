@@ -16,7 +16,7 @@ import { useAuthStore } from './authStore';
 
 interface ChatStoreState extends ChatState {
   // Workspace actions
-  createWorkspace: (name: string, description?: string) => Promise<void>;
+  createWorkspace: (name: string) => Promise<void>;
   updateWorkspace: (id: string, updates: Partial<Workspace>) => Promise<void>;
   deleteWorkspace: (id: string) => Promise<void>;
   setCurrentWorkspace: (workspace: Workspace | null) => void;
@@ -64,7 +64,7 @@ export const useChatStore = create<ChatStoreState>()(
       error: null,
       
       // Workspace actions
-      createWorkspace: async (name, description) => {
+      createWorkspace: async (name) => {
         const { user } = useAuthStore.getState();
         if (!user) throw new Error('User must be logged in');
         
@@ -72,7 +72,6 @@ export const useChatStore = create<ChatStoreState>()(
           id: '',
           userId: user.id,
           name,
-          description,
           systemPrompt: 'You are a helpful AI assistant.',
           provider: 'openai',
           model: 'gpt-4o',

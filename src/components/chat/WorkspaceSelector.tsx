@@ -12,7 +12,6 @@ const WorkspaceSelector: React.FC = () => {
   } = useChatStore();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
-  const [newWorkspaceDescription, setNewWorkspaceDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   
   const handleCreateWorkspace = async (e: React.FormEvent) => {
@@ -21,9 +20,8 @@ const WorkspaceSelector: React.FC = () => {
     
     setIsCreating(true);
     try {
-      await createWorkspace(newWorkspaceName.trim(), newWorkspaceDescription.trim() || undefined);
+      await createWorkspace(newWorkspaceName.trim());
       setNewWorkspaceName('');
-      setNewWorkspaceDescription('');
       setShowCreateForm(false);
     } catch (error) {
       console.error('Failed to create workspace:', error);
@@ -55,11 +53,6 @@ const WorkspaceSelector: React.FC = () => {
                 <p className="font-medium text-primary-900 dark:text-primary-100 truncate">
                   {currentWorkspace.name}
                 </p>
-                {currentWorkspace.description && (
-                  <p className="text-xs text-primary-700 dark:text-primary-300 truncate">
-                    {currentWorkspace.description}
-                  </p>
-                )}
               </div>
             </div>
             <ChevronDown className="w-4 h-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
@@ -82,9 +75,6 @@ const WorkspaceSelector: React.FC = () => {
                   <Folder className="w-4 h-4 text-gray-500 mr-2 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{workspace.name}</p>
-                    {workspace.description && (
-                      <p className="text-xs text-gray-500 truncate">{workspace.description}</p>
-                    )}
                   </div>
                 </div>
                 <button
@@ -100,7 +90,7 @@ const WorkspaceSelector: React.FC = () => {
       
       {/* Create New Workspace */}
       {showCreateForm ? (
-        <form onSubmit={handleCreateWorkspace} className="space-y-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <form onSubmit={handleCreateWorkspace} className="space-y-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <input
             type="text"
             value={newWorkspaceName}
@@ -109,13 +99,6 @@ const WorkspaceSelector: React.FC = () => {
             className="input text-sm"
             autoFocus
             required
-          />
-          <input
-            type="text"
-            value={newWorkspaceDescription}
-            onChange={(e) => setNewWorkspaceDescription(e.target.value)}
-            placeholder="Description (optional)"
-            className="input text-sm"
           />
           <div className="flex space-x-2">
             <button
@@ -130,7 +113,6 @@ const WorkspaceSelector: React.FC = () => {
               onClick={() => {
                 setShowCreateForm(false);
                 setNewWorkspaceName('');
-                setNewWorkspaceDescription('');
               }}
               className="btn-outline text-sm"
             >

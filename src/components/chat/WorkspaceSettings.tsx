@@ -16,7 +16,6 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
   const { apiKeys } = useAuthStore();
   const [formData, setFormData] = useState({
     name: workspace.name,
-    description: workspace.description || '',
     systemPrompt: workspace.systemPrompt,
     provider: workspace.provider,
     model: workspace.model
@@ -80,17 +79,6 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="input text-sm"
             required
-          />
-        </div>
-        
-        <div>
-          <label className="label">Description</label>
-          <input
-            type="text"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="input text-sm"
-            placeholder="Optional description"
           />
         </div>
         
