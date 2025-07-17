@@ -100,8 +100,8 @@ const PlaygroundPage: React.FC = () => {
       {/* Tab Content */}
       <div className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
         {activeTab === 'prompt' ? (
-          <div className="h-full p-6">
-            <div className="grid grid-cols-2 gap-6 h-full">
+          <div className="h-full p-6 flex flex-col">
+            <div className="grid grid-cols-2 gap-6 flex-1">
               {/* System Prompt */}
               <div className="flex flex-col">
                 <label className="label mb-3">System Prompt</label>
@@ -128,7 +128,7 @@ const PlaygroundPage: React.FC = () => {
             </div>
             
             {/* Submit Button */}
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-6 flex-shrink-0">
               <button
                 onClick={handleSubmitPrompt}
                 disabled={!currentPrompt.userPrompt.trim()}
