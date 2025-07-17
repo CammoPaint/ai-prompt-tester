@@ -35,6 +35,8 @@ const defaultModelConfig: AIModelConfig = {
 };
 
 const initialPromptState: PromptState = {
+  id: undefined,
+  title: undefined,
   systemPrompt: '',
   userPrompt: '',
   responseFormat: 'markdown',
@@ -96,24 +98,24 @@ export const usePromptStore = create<PromptStoreState>()(
       
       resetCurrentPrompt: () => 
         set({ 
-          currentPrompt: initialPromptState,
+          currentPrompt: { ...initialPromptState },
           response: null,
           error: null 
         }),
       
       savePrompt: async (title) => {
-        const { currentPrompt, response, savedPrompts } = get();
+        const { currentPrompt, response } = get();
         const { user } = useAuthStore.getState();
         
         if (!user) {
           throw new Error('User must be logged in to save prompts');
         }
         
-        // Find existing prompt with the same title
-        const existingPrompt = savedPrompts.find(p => p.title === title);
+        // Check if we're updating an existing prompt or creating a new one
+        const isUpdate = !!currentPrompt.id;
         
         const promptData: SavedPrompt = {
-          id: existingPrompt?.id,
+          id: currentPrompt.id,
           userId: user.id,
           title,
           systemPrompt: currentPrompt.systemPrompt.trim(),
@@ -123,16 +125,28 @@ export const usePromptStore = create<PromptStoreState>()(
           response: response?.content ? response.content.trim() : undefined,
           tokenUsage: response?.tokenUsage,
           responseTime: response?.responseTime,
-          createdAt: existingPrompt?.createdAt || new Date().toISOString(),
+          createdAt: isUpdate ? '' : new Date().toISOString(), // Will be set by Firestore functions
           updatedAt: new Date().toISOString()
         };
         
         try {
-          if (existingPrompt) {
-            await updatePromptInFirestore(existingPrompt.id!, promptData);
+          let savedId: string;
+          if (isUpdate) {
+            await updatePromptInFirestore(currentPrompt.id!, promptData);
+            savedId = currentPrompt.id!;
           } else {
-            await savePromptToFirestore(promptData);
+            savedId = await savePromptToFirestore(promptData);
           }
+          
+          // Update current prompt with saved ID and title
+          set((state) => ({
+            currentPrompt: {
+              ...state.currentPrompt,
+              id: savedId,
+              title: title
+            }
+          }));
+          
           await get().loadPrompts();
         } catch (error) {
           throw new Error('Failed to save prompt');
@@ -167,6 +181,8 @@ export const usePromptStore = create<PromptStoreState>()(
           set((state) => ({
             currentPrompt: {
               ...state.currentPrompt,
+              id: promptToLoad.id,
+              title: promptToLoad.title,
               systemPrompt: promptToLoad.systemPrompt,
               userPrompt: promptToLoad.userPrompt,
               modelConfig: {

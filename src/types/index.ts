@@ -48,6 +48,8 @@ export interface AIModelConfig {
 export type ResponseFormat = 'json' | 'markdown';
 
 export interface PromptState {
+  id?: string;
+  title?: string;
   systemPrompt: string;
   userPrompt: string;
   responseFormat: ResponseFormat;
