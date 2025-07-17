@@ -16,19 +16,31 @@ import { app } from './firebase';
 import { ChatThread, Workspace } from '../types/chat';
 
 let db: any = null;
+let firestoreAvailable = false;
 
 if (app) {
   try {
     db = getFirestore(app);
+    firestoreAvailable = true;
   } catch (error) {
     console.warn('Firestore initialization failed:', error);
+    firestoreAvailable = false;
   }
 }
 
+// Helper function to check if Firestore is available
+const checkFirestoreAvailable = () => {
+  if (!firestoreAvailable || !db) {
+    console.warn('Firestore is not available. Please configure Firebase in your environment variables.');
+    return false;
+  }
+  return true;
+};
+
 // Workspace operations
 export const saveWorkspaceToFirestore = async (workspace: Workspace) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
@@ -41,6 +53,7 @@ export const saveWorkspaceToFirestore = async (workspace: Workspace) => {
     });
     return docRef.id;
   } catch (error) {
+    console.error('Error saving workspace:', error);
     throw new Error('Failed to save workspace to Firestore');
   }
 };
@@ -49,8 +62,8 @@ export const updateWorkspaceInFirestore = async (
   workspaceId: string,
   workspace: Workspace
 ) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
@@ -61,13 +74,14 @@ export const updateWorkspaceInFirestore = async (
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (error) {
+    console.error('Error updating workspace:', error);
     throw new Error('Failed to update workspace in Firestore');
   }
 };
 
 export const getWorkspacesFromFirestore = async (userId: string) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    return []; // Return empty array instead of throwing error
   }
   
   try {
@@ -88,27 +102,29 @@ export const getWorkspacesFromFirestore = async (userId: string) => {
       new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
     );
   } catch (error) {
-    throw new Error('Failed to fetch workspaces from Firestore');
+    console.error('Error fetching workspaces:', error);
+    return []; // Return empty array on error
   }
 };
 
 export const deleteWorkspaceFromFirestore = async (workspaceId: string) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
     const workspaceRef = doc(db, 'workspaces', workspaceId);
     await deleteDoc(workspaceRef);
   } catch (error) {
+    console.error('Error deleting workspace:', error);
     throw new Error('Failed to delete workspace from Firestore');
   }
 };
 
 // Thread operations
 export const saveThreadToFirestore = async (thread: ChatThread) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
@@ -121,6 +137,7 @@ export const saveThreadToFirestore = async (thread: ChatThread) => {
     });
     return docRef.id;
   } catch (error) {
+    console.error('Error saving thread:', error);
     throw new Error('Failed to save thread to Firestore');
   }
 };
@@ -129,8 +146,8 @@ export const updateThreadInFirestore = async (
   threadId: string,
   thread: ChatThread
 ) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
@@ -141,13 +158,14 @@ export const updateThreadInFirestore = async (
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (error) {
+    console.error('Error updating thread:', error);
     throw new Error('Failed to update thread in Firestore');
   }
 };
 
 export const getThreadsFromFirestore = async (userId: string, workspaceId?: string) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    return []; // Return empty array instead of throwing error
   }
   
   try {
@@ -177,19 +195,21 @@ export const getThreadsFromFirestore = async (userId: string, workspaceId?: stri
       new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
     );
   } catch (error) {
-    throw new Error('Failed to fetch threads from Firestore');
+    console.error('Error fetching threads:', error);
+    return []; // Return empty array on error
   }
 };
 
 export const deleteThreadFromFirestore = async (threadId: string) => {
-  if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  if (!checkFirestoreAvailable()) {
+    throw new Error('Firestore is not configured');
   }
   
   try {
     const threadRef = doc(db, 'threads', threadId);
     await deleteDoc(threadRef);
   } catch (error) {
+    console.error('Error deleting thread:', error);
     throw new Error('Failed to delete thread from Firestore');
   }
 };

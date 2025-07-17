@@ -146,7 +146,9 @@ export const useChatStore = create<ChatStoreState>()(
             get().setCurrentWorkspace(workspaces[0]);
           }
         } catch (error) {
-          console.error('Failed to load workspaces:', error);
+          console.warn('Failed to load workspaces:', error);
+          // Set empty workspaces array on error
+          set({ workspaces: [] });
         }
       },
       
@@ -225,7 +227,9 @@ export const useChatStore = create<ChatStoreState>()(
           const threads = await getThreadsFromFirestore(user.id, workspaceId);
           set({ threads });
         } catch (error) {
-          console.error('Failed to load threads:', error);
+          console.warn('Failed to load threads:', error);
+          // Set empty threads array on error
+          set({ threads: [] });
         }
       },
       
