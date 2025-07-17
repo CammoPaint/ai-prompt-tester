@@ -64,4 +64,3 @@ export interface AIResponse {
   model: string;
   tokenUsage: TokenUsage;
   responseTime: number;
-}
