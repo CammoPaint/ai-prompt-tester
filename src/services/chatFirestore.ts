@@ -73,16 +73,20 @@ export const getWorkspacesFromFirestore = async (userId: string) => {
   try {
     const workspacesRef = collection(db, 'workspaces');
     const q = query(
-      workspacesRef, 
-      where('userId', '==', userId),
-      orderBy('updatedAt', 'desc')
+      workspacesRef,
+      where('userId', '==', userId)
     );
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    const workspaces = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Workspace[];
+    
+    // Sort by updatedAt in memory instead of in the query
+    return workspaces.sort((a, b) => 
+      new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+    );
   } catch (error) {
     throw new Error('Failed to fetch workspaces from Firestore');
   }
@@ -149,26 +153,29 @@ export const getThreadsFromFirestore = async (userId: string, workspaceId?: stri
   try {
     const threadsRef = collection(db, 'threads');
     let q = query(
-      threadsRef, 
-      where('userId', '==', userId),
-      orderBy('updatedAt', 'desc')
+      threadsRef,
+      where('userId', '==', userId)
     );
     
     if (workspaceId) {
       q = query(
         threadsRef,
         where('userId', '==', userId),
-        where('workspaceId', '==', workspaceId),
-        orderBy('updatedAt', 'desc')
+        where('workspaceId', '==', workspaceId)
       );
     }
     
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
+    const threads = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as ChatThread[];
+    
+    // Sort by updatedAt in memory instead of in the query
+    return threads.sort((a, b) => 
+      new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+    );
   } catch (error) {
     throw new Error('Failed to fetch threads from Firestore');
   }
