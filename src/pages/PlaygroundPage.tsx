@@ -57,7 +57,7 @@ const PlaygroundPage: React.FC = () => {
       {/* Header with Model Selector and Controls */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold">Prompt Playground</h1>
+          <h1 className="text-2xl font-bold">Playground</h1>
           <ModelSelector 
             modelConfig={currentPrompt.modelConfig}
             onChange={(config) => usePromptStore.getState().setModelConfig(config)}
