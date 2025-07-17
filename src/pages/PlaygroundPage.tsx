@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MessageSquare, Bot } from 'lucide-react';
 import { sendPrompt } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
@@ -8,15 +8,18 @@ import FormatToggle from '../components/playground/FormatToggle';
 import SavePromptButton from '../components/playground/SavePromptButton';
 import ModelSelector from '../components/playground/ModelSelector';
 
+type TabType = 'prompt' | 'response';
+
 const PlaygroundPage: React.FC = () => {
   const { 
     currentPrompt, 
+    response,
     setResponse, 
     setLoading, 
     setError,
     resetCurrentPrompt 
   } = usePromptStore();
-  const [isResponseFullscreen, setIsResponseFullscreen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('prompt');
   const { apiKeys } = useAuthStore();
   
   const handleSubmitPrompt = async () => {
@@ -34,12 +37,16 @@ const PlaygroundPage: React.FC = () => {
     try {
       const response = await sendPrompt(currentPrompt);
       setResponse(response);
+      // Auto-switch to response tab when we get a response
+      setActiveTab('response');
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
         setError('An unknown error occurred');
       }
+      // Switch to response tab to show the error
+      setActiveTab('response');
     } finally {
       setLoading(false);
     }
@@ -47,99 +54,97 @@ const PlaygroundPage: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-6 h-[calc(100vh-4rem)] flex flex-col">
-      <div className="grid grid-cols-2 gap-4 h-[calc(100vh-6rem)]">
-        {/* Left Panel - System Prompt */}
-        <div className="flex flex-col">
-          <div className="mb-4">
-            <ModelSelector 
-              modelConfig={currentPrompt.modelConfig}
-              onChange={(config) => usePromptStore.getState().setModelConfig(config)}
-            />
-          </div>
-          <div className="flex-1 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-            <div className="h-full flex flex-col">
-              <label className="label mb-2">System Prompt</label>
-              <div className="flex-1 overflow-auto">
-                <textarea
-                  value={currentPrompt.systemPrompt}
-                  onChange={(e) => usePromptStore.getState().setSystemPrompt(e.target.value)}
-                  className="textarea font-mono text-sm w-full h-full resize-none"
-                  placeholder="Describe desired model behavior (tone, tool usage, response style)"
-                />
-              </div>
-            </div>
-          </div>
+      {/* Header with Model Selector and Controls */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">Prompt Playground</h1>
+          <ModelSelector 
+            modelConfig={currentPrompt.modelConfig}
+            onChange={(config) => usePromptStore.getState().setModelConfig(config)}
+          />
         </div>
-        
-        {/* Right Panel - User Prompt and Response */}
-        <div className="flex flex-col">
-          {/* User Prompt */}
-          <div className="mb-4 flex items-center justify-between">
-            <FormatToggle />
-          </div>
-          <div className="flex-1 grid grid-rows-2 gap-4">
-            <div className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-              <div className="h-full flex flex-col">
-                <label className="label mb-2">User Prompt</label>
-                <div className="flex-1 overflow-auto">
+        <div className="flex items-center space-x-2">
+          <FormatToggle />
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex space-x-1 mb-4">
+        <button
+          onClick={() => setActiveTab('prompt')}
+          className={`flex items-center px-4 py-2 rounded-t-lg font-medium transition-colors ${
+            activeTab === 'prompt'
+              ? 'bg-white dark:bg-gray-900 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Prompts
+        </button>
+        <button
+          onClick={() => setActiveTab('response')}
+          className={`flex items-center px-4 py-2 rounded-t-lg font-medium transition-colors ${
+            activeTab === 'response'
+              ? 'bg-white dark:bg-gray-900 text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+          }`}
+        >
+          <Bot className="w-4 h-4 mr-2" />
+          Response
+          {response && (
+            <span className="ml-2 w-2 h-2 bg-primary-500 rounded-full"></span>
+          )}
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+        {activeTab === 'prompt' ? (
+          <div className="h-full p-6">
+            <div className="grid grid-cols-2 gap-6 h-full">
+              {/* System Prompt */}
+              <div className="flex flex-col">
+                <label className="label mb-3">System Prompt</label>
+                <div className="flex-1 flex flex-col">
+                  <textarea
+                    value={currentPrompt.systemPrompt}
+                    onChange={(e) => usePromptStore.getState().setSystemPrompt(e.target.value)}
+                    className="textarea font-mono text-sm flex-1 resize-none"
+                    placeholder="Describe desired model behavior (tone, tool usage, response style)..."
+                  />
+                </div>
+              </div>
+              
+              {/* User Prompt */}
+              <div className="flex flex-col">
+                <label className="label mb-3">User Prompt</label>
+                <div className="flex-1 flex flex-col">
                   <textarea
                     value={currentPrompt.userPrompt}
                     onChange={(e) => usePromptStore.getState().setUserPrompt(e.target.value)}
-                    className="textarea font-mono text-sm w-full h-full resize-none"
+                    className="textarea font-mono text-sm flex-1 resize-none"
                     placeholder="Write your prompt here..."
                   />
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={handleSubmitPrompt}
+                      disabled={!currentPrompt.userPrompt.trim()}
+                      className="btn-primary"
+                    >
+                      Submit
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={handleSubmitPrompt}
-                  disabled={!currentPrompt.userPrompt.trim()}
-                  className="btn-primary mt-4"
-                >
-                  Submit
-                </button>
               </div>
             </div>
-            
-            {/* Response */}
-            {isResponseFullscreen ? (
-              <div className="fixed inset-0 bg-white dark:bg-gray-900 z-50 p-6 overflow-auto">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold">Response</h2>
-                  <button
-                    onClick={() => setIsResponseFullscreen(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                  </button>
-                </div>
-                <ResponseViewer isExpanded={true} />
-              </div>
-            ) : (
-              <div className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-sm font-semibold">Response</h2>
-                  <button
-                    onClick={() => setIsResponseFullscreen(true)}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    title="Expand"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M15 3h6v6"></path>
-                      <path d="M9 21H3v-6"></path>
-                      <path d="M21 3l-7 7"></path>
-                      <path d="M3 21l7-7"></path>
-                    </svg>
-                  </button>
-                </div>
-                <div className="h-[200px] overflow-auto">
-                  <ResponseViewer isExpanded={false} />
-                </div>
-              </div>
-            )}
           </div>
-        </div>
+        ) : (
+          <div className="h-full p-6">
+            <div className="h-full overflow-auto">
+              <ResponseViewer isExpanded={true} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
