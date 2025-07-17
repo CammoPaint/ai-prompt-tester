@@ -118,24 +118,24 @@ const PlaygroundPage: React.FC = () => {
               {/* User Prompt */}
               <div className="flex flex-col">
                 <label className="label mb-3">User Prompt</label>
-                <div className="flex-1 flex flex-col">
-                  <textarea
-                    value={currentPrompt.userPrompt}
-                    onChange={(e) => usePromptStore.getState().setUserPrompt(e.target.value)}
-                    className="textarea font-mono text-sm flex-1 resize-none"
-                    placeholder="Write your prompt here..."
-                  />
-                  <div className="flex justify-end mt-4">
-                    <button
-                      onClick={handleSubmitPrompt}
-                      disabled={!currentPrompt.userPrompt.trim()}
-                      className="btn-primary"
-                    >
-                      Submit
-                    </button>
-                  </div>
-                </div>
+                <textarea
+                  value={currentPrompt.userPrompt}
+                  onChange={(e) => usePromptStore.getState().setUserPrompt(e.target.value)}
+                  className="textarea font-mono text-sm flex-1 resize-none"
+                  placeholder="Write your prompt here..."
+                />
               </div>
+            </div>
+            
+            {/* Submit Button */}
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={handleSubmitPrompt}
+                disabled={!currentPrompt.userPrompt.trim()}
+                className="btn-primary px-8"
+              >
+                Submit
+              </button>
             </div>
           </div>
         ) : (
