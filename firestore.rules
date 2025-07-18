@@ -17,7 +17,7 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow list: if request.auth != null && resource.data.userId is string && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -43,7 +43,7 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow list: if request.auth != null && resource.data.userId is string && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -63,7 +63,7 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow list: if request.auth != null && resource.data.userId is string && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
