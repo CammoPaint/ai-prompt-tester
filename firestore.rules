@@ -13,8 +13,11 @@ service cloud.firestore {
     
     // Rules for prompts collection
     match /prompts/{promptId} {
-      // Allow read if the document belongs to the authenticated user
-      allow read: if isOwner(resource.data.userId);
+      // Allow get if the document belongs to the authenticated user
+      allow get: if isOwner(resource.data.userId);
+      
+      // Allow list if user is authenticated and querying their own documents
+      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -36,8 +39,11 @@ service cloud.firestore {
     
     // Rules for workspaces collection
     match /workspaces/{workspaceId} {
-      // Allow read if the document belongs to the authenticated user
-      allow read: if isOwner(resource.data.userId);
+      // Allow get if the document belongs to the authenticated user
+      allow get: if isOwner(resource.data.userId);
+      
+      // Allow list if user is authenticated and querying their own documents
+      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -53,8 +59,11 @@ service cloud.firestore {
     
     // Rules for threads collection
     match /threads/{threadId} {
-      // Allow read if the document belongs to the authenticated user
-      allow read: if isOwner(resource.data.userId);
+      // Allow get if the document belongs to the authenticated user
+      allow get: if isOwner(resource.data.userId);
+      
+      // Allow list if user is authenticated and querying their own documents
+      allow list: if request.auth != null && request.auth.uid == resource.data.userId;
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
