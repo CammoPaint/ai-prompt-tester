@@ -1,4 +1,4 @@
-import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, setDoc, getDoc, limit } from 'firebase/firestore';
 import { app } from './firebase';
 import { SavedPrompt, ApiKeys, CustomOpenRouterModel } from '../types';
 
@@ -136,7 +136,8 @@ export const getCustomOpenRouterModels = async (userId: string): Promise<CustomO
   try {
     const userRef = doc(db, 'users', userId);
     const modelsRef = collection(userRef, 'customOpenRouterModels');
-    const querySnapshot = await getDocs(modelsRef);
+    const q = query(modelsRef, limit(50));
+    const querySnapshot = await getDocs(q);
     
     return querySnapshot.docs.map(doc => ({
       id: doc.id,

@@ -38,7 +38,10 @@ service cloud.firestore {
       
       // Rules for custom OpenRouter models subcollection
       match /customOpenRouterModels/{modelId} {
-        allow read, write: if isOwner(userId);
+        // Allow read operations with query limit
+        allow read: if isOwner(userId) && request.query.limit <= 50;
+        // Allow write operations for the owner
+        allow write: if isOwner(userId);
       }
     }
     
