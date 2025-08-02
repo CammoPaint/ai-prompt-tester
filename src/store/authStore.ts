@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, ApiKeys } from '../types';
-import { saveApiKeys, getApiKeys } from '../services/firestore';
+import { User, ApiKeys, CustomOpenRouterModel } from '../types';
+import { 
+  saveApiKeys, 
+  getApiKeys, 
+  saveCustomOpenRouterModel, 
+  getCustomOpenRouterModels, 
+  deleteCustomOpenRouterModel 
+} from '../services/firestore';
 
 interface AuthState {
   user: User | null;
   apiKeys: ApiKeys;
+  customOpenRouterModels: CustomOpenRouterModel[];
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -13,6 +20,9 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setApiKey: (provider: keyof ApiKeys, key: string) => Promise<void>;
   removeApiKey: (provider: keyof ApiKeys) => Promise<void>;
+  addCustomOpenRouterModel: (name: string, modelId: string) => Promise<void>;
+  removeCustomOpenRouterModel: (modelId: string) => Promise<void>;
+  loadCustomOpenRouterModels: () => Promise<void>;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   logout: () => void;
@@ -24,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       apiKeys: {},
+      customOpenRouterModels: [],
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -38,8 +49,9 @@ export const useAuthStore = create<AuthState>()(
         // Load API keys when user logs in
         if (user) {
           get().loadApiKeys();
+          get().loadCustomOpenRouterModels();
         } else {
-          set({ apiKeys: {} });
+          set({ apiKeys: {}, customOpenRouterModels: [] });
         }
       },
       
@@ -67,6 +79,51 @@ export const useAuthStore = create<AuthState>()(
         set({ apiKeys: updatedKeys });
       },
       
+      addCustomOpenRouterModel: async (name, modelId) => {
+        const { user } = get();
+        if (!user) return;
+        
+        try {
+          const id = await saveCustomOpenRouterModel(user.id, { name, modelId });
+          const newModel = { id, name, modelId };
+          
+          set(state => ({
+            customOpenRouterModels: [...state.customOpenRouterModels, newModel]
+          }));
+        } catch (error) {
+          console.error('Failed to add custom OpenRouter model:', error);
+          throw error;
+        }
+      },
+      
+      removeCustomOpenRouterModel: async (modelId) => {
+        const { user } = get();
+        if (!user) return;
+        
+        try {
+          await deleteCustomOpenRouterModel(user.id, modelId);
+          
+          set(state => ({
+            customOpenRouterModels: state.customOpenRouterModels.filter(model => model.id !== modelId)
+          }));
+        } catch (error) {
+          console.error('Failed to remove custom OpenRouter model:', error);
+          throw error;
+        }
+      },
+      
+      loadCustomOpenRouterModels: async () => {
+        const { user } = get();
+        if (!user) return;
+        
+        try {
+          const models = await getCustomOpenRouterModels(user.id);
+          set({ customOpenRouterModels: models });
+        } catch (error) {
+          console.error('Failed to load custom OpenRouter models:', error);
+        }
+      },
+      
       setLoading: (isLoading) => 
         set({ isLoading }),
       
@@ -78,6 +135,7 @@ export const useAuthStore = create<AuthState>()(
           user: null, 
           isAuthenticated: false,
           apiKeys: {},
+          customOpenRouterModels: [],
           error: null 
         }),
       

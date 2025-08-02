@@ -38,6 +38,12 @@ export interface SavedPrompt {
   updatedAt: string;
 }
 
+export interface CustomOpenRouterModel {
+  id: string;
+  name: string;
+  modelId: string;
+}
+
 export interface AIModelConfig {
   provider: AIProvider;
   model: string;

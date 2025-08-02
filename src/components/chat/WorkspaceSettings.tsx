@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Save, X } from 'lucide-react';
 import { Workspace } from '../../types/chat';
 import { AIProvider } from '../../types';
-import { getAvailableModels } from '../../services/apiService';
+import { getAvailableModels, getCombinedOpenRouterModels } from '../../services/apiService';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 
@@ -13,7 +13,7 @@ interface WorkspaceSettingsProps {
 
 const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClose }) => {
   const { updateWorkspace } = useChatStore();
-  const { apiKeys } = useAuthStore();
+  const { apiKeys, customOpenRouterModels } = useAuthStore();
   const [formData, setFormData] = useState({
     name: workspace.name,
     systemPrompt: workspace.systemPrompt,
@@ -35,10 +35,14 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
     ...(isLocalhost ? [{ id: 'ollama', name: 'Local LLM (Ollama)' }] : [])
   ];
   
-  const availableModels = getAvailableModels(formData.provider);
+  const availableModels = formData.provider === 'openrouter' 
+    ? getCombinedOpenRouterModels(customOpenRouterModels)
+    : getAvailableModels(formData.provider);
   
   const handleProviderChange = (provider: AIProvider) => {
-    const models = getAvailableModels(provider);
+    const models = provider === 'openrouter' 
+      ? getCombinedOpenRouterModels(customOpenRouterModels)
+      : getAvailableModels(provider);
     setFormData({
       ...formData,
       provider,

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { AIModelConfig, AIProvider } from '../../types';
-import { getAvailableModels, fetchOllamaModels } from '../../services/apiService';
+import { getAvailableModels, fetchOllamaModels, getCombinedOpenRouterModels } from '../../services/apiService';
+import { useAuthStore } from '../../store/authStore';
 import { getProviderColor } from '../../utils/theme';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 
@@ -13,6 +14,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   modelConfig, 
   onChange 
 }) => {
+  const { customOpenRouterModels } = useAuthStore();
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isLoadingOllama, setIsLoadingOllama] = useState(false);
   
@@ -22,9 +24,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const availableModels = useMemo(() => {
     if (modelConfig.provider === 'ollama') {
       return ollamaModels.length > 0 ? ollamaModels : getAvailableModels('ollama');
+    } else if (modelConfig.provider === 'openrouter') {
+      return getCombinedOpenRouterModels(customOpenRouterModels);
     }
     return getAvailableModels(modelConfig.provider);
-  }, [modelConfig.provider, ollamaModels]);
+  }, [modelConfig.provider, ollamaModels, customOpenRouterModels]);
   
   const loadOllamaModels = async () => {
     if (!isLocalhost) return;
@@ -52,7 +56,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const provider = e.target.value as AIProvider;
-    const models = provider === 'ollama' ? (isLocalhost ? ollamaModels : []) : getAvailableModels(provider);
+    let models: string[];
+    if (provider === 'ollama') {
+      models = isLocalhost ? ollamaModels : [];
+    } else if (provider === 'openrouter') {
+      models = getCombinedOpenRouterModels(customOpenRouterModels);
+    } else {
+      models = getAvailableModels(provider);
+    }
+    
     onChange({ 
       provider,
       model: models[0] || '' // Default to first model

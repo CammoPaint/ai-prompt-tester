@@ -1,6 +1,6 @@
 import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import { app } from './firebase';
-import { SavedPrompt, ApiKeys } from '../types';
+import { SavedPrompt, ApiKeys, CustomOpenRouterModel } from '../types';
 
 let db: any = null;
 
@@ -107,5 +107,56 @@ export const getApiKeys = async (userId: string): Promise<ApiKeys> => {
     return userDoc.exists() ? (userDoc.data().apiKeys || {}) : {};
   } catch (error) {
     throw new Error('Failed to fetch API keys');
+  }
+};
+
+export const saveCustomOpenRouterModel = async (userId: string, model: Omit<CustomOpenRouterModel, 'id'>) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    const modelsRef = collection(userRef, 'customOpenRouterModels');
+    const docRef = await addDoc(modelsRef, {
+      ...model,
+      createdAt: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (error) {
+    throw new Error('Failed to save custom OpenRouter model');
+  }
+};
+
+export const getCustomOpenRouterModels = async (userId: string): Promise<CustomOpenRouterModel[]> => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    const modelsRef = collection(userRef, 'customOpenRouterModels');
+    const querySnapshot = await getDocs(modelsRef);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as CustomOpenRouterModel[];
+  } catch (error) {
+    throw new Error('Failed to fetch custom OpenRouter models');
+  }
+};
+
+export const deleteCustomOpenRouterModel = async (userId: string, modelId: string) => {
+  if (!db) {
+    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+  }
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    const modelRef = doc(userRef, 'customOpenRouterModels', modelId);
+    await deleteDoc(modelRef);
+  } catch (error) {
+    throw new Error('Failed to delete custom OpenRouter model');
   }
 };

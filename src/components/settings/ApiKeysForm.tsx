@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { Check, Eye, EyeOff, Key } from 'lucide-react';
+import { Check, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { ApiKeys } from '../../types';
 
 const ApiKeysForm: React.FC = () => {
-  const { apiKeys, setApiKey, removeApiKey } = useAuthStore();
+  const { 
+    apiKeys, 
+    setApiKey, 
+    removeApiKey, 
+    customOpenRouterModels, 
+    addCustomOpenRouterModel, 
+    removeCustomOpenRouterModel 
+  } = useAuthStore();
   const [formData, setFormData] = useState<ApiKeys>({ ...apiKeys });
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [savedStatus, setSavedStatus] = useState<Record<string, boolean>>({});
+  const [customModelForm, setCustomModelForm] = useState({ name: '', modelId: '' });
+  const [isAddingModel, setIsAddingModel] = useState(false);
   
   const providers = [
     { id: 'openai', name: 'OpenAI' },
@@ -59,6 +68,31 @@ const ApiKeysForm: React.FC = () => {
         [provider]: false
       });
     }, 3000);
+  };
+  
+  const handleAddCustomModel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customModelForm.name.trim() || !customModelForm.modelId.trim()) return;
+    
+    setIsAddingModel(true);
+    try {
+      await addCustomOpenRouterModel(customModelForm.name.trim(), customModelForm.modelId.trim());
+      setCustomModelForm({ name: '', modelId: '' });
+    } catch (error) {
+      console.error('Failed to add custom model:', error);
+    } finally {
+      setIsAddingModel(false);
+    }
+  };
+  
+  const handleRemoveCustomModel = async (modelId: string) => {
+    if (confirm('Are you sure you want to remove this custom model?')) {
+      try {
+        await removeCustomOpenRouterModel(modelId);
+      } catch (error) {
+        console.error('Failed to remove custom model:', error);
+      }
+    }
   };
   
   return (
@@ -137,6 +171,85 @@ const ApiKeysForm: React.FC = () => {
               )}
             </div>
           ))}
+        </div>
+      </div>
+      
+      <div className="card">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+          <h2 className="text-lg font-medium">Custom OpenRouter Models</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Add your own OpenRouter models by specifying the model ID from the OpenRouter API.
+          </p>
+        </div>
+        
+        <div className="p-4 space-y-4">
+          {/* Add Custom Model Form */}
+          <form onSubmit={handleAddCustomModel} className="space-y-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Model Name</label>
+                <input
+                  type="text"
+                  value={customModelForm.name}
+                  onChange={(e) => setCustomModelForm({ ...customModelForm, name: e.target.value })}
+                  placeholder="e.g., Claude 3.5 Sonnet"
+                  className="input text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">OpenRouter Model ID</label>
+                <input
+                  type="text"
+                  value={customModelForm.modelId}
+                  onChange={(e) => setCustomModelForm({ ...customModelForm, modelId: e.target.value })}
+                  placeholder="e.g., anthropic/claude-3.5-sonnet"
+                  className="input text-sm font-mono"
+                  required
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={isAddingModel || !customModelForm.name.trim() || !customModelForm.modelId.trim()}
+              className="btn-primary text-sm flex items-center"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              {isAddingModel ? 'Adding...' : 'Add Custom Model'}
+            </button>
+          </form>
+          
+          {/* Custom Models List */}
+          {customOpenRouterModels.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Custom Models</h3>
+              {customOpenRouterModels.map((model) => (
+                <div
+                  key={model.id}
+                  className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium text-sm">{model.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{model.modelId}</p>
+                  </div>
+                  <button
+                    onClick={() => handleRemoveCustomModel(model.id)}
+                    className="p-2 text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300 hover:bg-error-50 dark:hover:bg-error-900/20 rounded"
+                    title="Remove custom model"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {customOpenRouterModels.length === 0 && (
+            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+              <p className="text-sm">No custom models added yet.</p>
+              <p className="text-xs mt-1">Add your first custom OpenRouter model above.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

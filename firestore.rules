@@ -35,6 +35,11 @@ service cloud.firestore {
     match /users/{userId} {
       // Users can only read and write their own data
       allow read, write: if isOwner(userId);
+      
+      // Rules for custom OpenRouter models subcollection
+      match /customOpenRouterModels/{modelId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // Rules for workspaces collection
