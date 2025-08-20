@@ -53,7 +53,8 @@ export const updatePromptInFirestore = async (
 
 export const getPromptsFromFirestore = async (userId: string) => {
   if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+    console.warn('Firestore is not configured. Please set up your Firebase environment variables.');
+    return [];
   }
   
   try {
@@ -66,7 +67,8 @@ export const getPromptsFromFirestore = async (userId: string) => {
       ...doc.data()
     })) as SavedPrompt[];
   } catch (error) {
-    throw new Error('Failed to fetch prompts from Firestore');
+    console.error('Failed to fetch prompts from Firestore:', error);
+    return [];
   }
 };
 
@@ -130,7 +132,8 @@ export const saveCustomOpenRouterModel = async (userId: string, model: Omit<Cust
 
 export const getCustomOpenRouterModels = async (userId: string): Promise<CustomOpenRouterModel[]> => {
   if (!db) {
-    throw new Error('Firestore is not configured. Please set up your Firebase environment variables.');
+    console.warn('Firestore is not configured. Please set up your Firebase environment variables.');
+    return [];
   }
   
   try {
@@ -144,7 +147,8 @@ export const getCustomOpenRouterModels = async (userId: string): Promise<CustomO
       ...doc.data()
     })) as CustomOpenRouterModel[];
   } catch (error) {
-    throw new Error('Failed to fetch custom OpenRouter models');
+    console.error('Failed to fetch custom OpenRouter models:', error);
+    return [];
   }
 };
 

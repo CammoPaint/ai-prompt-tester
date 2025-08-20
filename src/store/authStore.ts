@@ -120,7 +120,8 @@ export const useAuthStore = create<AuthState>()(
           const models = await getCustomOpenRouterModels(user.id);
           set({ customOpenRouterModels: models });
         } catch (error) {
-          console.error('Failed to load custom OpenRouter models:', error);
+          console.warn('Failed to load custom OpenRouter models:', error);
+          set({ customOpenRouterModels: [] });
         }
       },
       
