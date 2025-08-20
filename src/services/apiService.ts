@@ -211,9 +211,9 @@ export const sendPrompt = async (promptState: PromptState): Promise<AIResponse> 
 // Get available models for each provider
 export const getAvailableModels = (provider: AIProvider): string[] => {
   const models = {
-    openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    openrouter: ['perplexity/sonar', 'deepseek/deepseek-r1-0528:free', 'deepseek/deepseek-r1-0528-qwen3-8b:free','anthropic/claude-3.7-sonnet', 'mistralai/mistral-7b-instruct'],
-    perplexity: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research', 'r1-1776','llama-2-70b-chat', 'llama-3.1-sonar-small-128k-online'],
+    openai: ['gpt-5', 'gpt-5-mini', 'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+    openrouter: ['perplexity/sonar', 'deepseek/deepseek-r1-0528:free', 'deepseek/deepseek-r1-0528-qwen3-8b:free','anthropic/claude-3.7-sonnet', 'mistralai/mistral-7b-instruct', 'openai/gpt-oss-20b', 'meta-llama/llama-3.3-70b-instruct:free', 'meta-llama/llama-3.3-70b-instruct'],
+    perplexity: ['sonar', 'sonar-small', 'sonar-pro', 'sonar-deep-research', 'r1-1776','llama-2-13b-chat', 'llama-3.1-sonar-small-128k-online'],
     deepseek: ['deepseek-chat','deepseek-coder'],
     grok: ['grok-3', 'grok-3-mini'],
     qwen: ['qwen-plus', 'qwen-turbo'],
