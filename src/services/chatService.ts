@@ -177,6 +177,8 @@ const formatChatRequest = (
     model,
     messages: apiMessages,
     temperature: 0.7,
-    max_tokens: 2048
+    ...(provider === 'openai' && (model.includes('gpt-5') || model.includes('o1'))
+      ? { max_completion_tokens: 2048 }
+      : { max_tokens: 2048 })
   };
 };

@@ -94,9 +94,13 @@ const formatRequest = (promptState: PromptState) => {
   const commonParams = {
     model,
     temperature,
-    max_tokens,
     messages
   };
+  
+  // Use max_completion_tokens for newer OpenAI models, max_tokens for others
+  const tokenParam = (provider === 'openai' && (model.includes('gpt-5') || model.includes('o1'))) 
+    ? { max_completion_tokens: max_tokens }
+    : { max_tokens };
   
   // Format response based on format preference
   const response_format = responseFormat === 'json' 
@@ -105,6 +109,7 @@ const formatRequest = (promptState: PromptState) => {
   
   return {
     ...commonParams,
+    ...tokenParam,
     ...(response_format && { response_format })
   };
 };
