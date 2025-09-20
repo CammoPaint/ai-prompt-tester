@@ -96,14 +96,14 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
             </button>
           </div>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div>
           <label className="label">Name</label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="input text-sm"
+            className="input"
             required
           />
         </div>
@@ -113,19 +113,19 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
           <textarea
             value={formData.systemPrompt}
             onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
-            className="textarea text-sm font-mono"
-            rows={3}
+            className="textarea font-mono"
+            rows={4}
             placeholder="Define the AI's behavior and personality..."
           />
         </div>
         
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Provider</label>
             <select
               value={formData.provider}
               onChange={(e) => handleProviderChange(e.target.value as AIProvider)}
-              className="select text-sm"
+              className="select"
             >
               {providers.map(provider => {
                 const hasApiKey = provider.id === 'ollama' || apiKeys[provider.id as keyof typeof apiKeys];
@@ -147,7 +147,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
             <select
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              className="select text-sm"
+              className="select"
             >
               {availableModels.map(model => (
                 <option key={model} value={model}>
@@ -159,7 +159,7 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
         </div>
       </div>
       
-          <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
             <button
               onClick={handleSave}
               disabled={isSaving || !formData.name.trim()}
