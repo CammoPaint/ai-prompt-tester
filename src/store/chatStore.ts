@@ -133,7 +133,15 @@ export const useChatStore = create<ChatStoreState>()(
           currentThread: null // Clear current thread when changing workspace
         });
         if (workspace) {
-          get().loadThreads(workspace.id);
+          // Load threads for the selected workspace
+          const loadThreadsForWorkspace = async () => {
+            try {
+              await get().loadThreads(workspace.id);
+            } catch (error) {
+              console.error('Failed to load threads for workspace:', error);
+            }
+          };
+          loadThreadsForWorkspace();
         }
       },
       
@@ -151,7 +159,10 @@ export const useChatStore = create<ChatStoreState>()(
           
           // Set first workspace as current if none selected
           if (workspaces.length > 0 && !get().currentWorkspace) {
-            get().setCurrentWorkspace(workspaces[0]);
+            const firstWorkspace = workspaces[0];
+            set({ currentWorkspace: firstWorkspace });
+            // Load threads for the first workspace
+            get().loadThreads(firstWorkspace.id);
           }
         } catch (error: any) {
           console.warn('Failed to load workspaces:', error);
