@@ -8,6 +8,7 @@ import SavedPromptsPage from './pages/SavedPromptsPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import ComparisonPage from './pages/ComparisonPage';
+import ChatPage from './pages/ChatPage';
 
 function App() {
   const { setUser } = useAuthStore();
@@ -33,6 +34,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<PlaygroundPage />} />
+          <Route path="chat" element={<ChatPage />} />
           <Route path="saved" element={<SavedPromptsPage />} />
           <Route path="compare" element={<ComparisonPage />} />
           <Route path="settings" element={<SettingsPage />} />

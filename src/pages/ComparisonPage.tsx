@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AIResponse, AIProvider, SavedPrompt } from '../types';
-import { sendPrompt } from '../services/apiService';
+import { sendPrompt, getAvailableModels } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
 import { getProviderColor } from '../utils/theme';
@@ -35,25 +35,54 @@ interface ProviderOption {
   models: string[];
 }
 
-const providers: ProviderOption[] = [
-  {
-    id: 'openai',
-    name: 'OpenAI',
-    models: ['gpt-4', 'gpt-3.5-turbo'],
-  },
-  {
-    id: 'anthropic',
-    name: 'Anthropic',
-    models: ['claude-2', 'claude-instant-1'],
-  },
-];
-
 const ComparisonPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDarkMode } = useThemeStore();
+  const { mode } = useThemeStore();
   const { apiKeys } = useAuthStore();
   const { currentPrompt } = usePromptStore();
+
+  // Check if we're running locally for Ollama availability
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+  // Get all available providers with their models
+  const providers: ProviderOption[] = [
+    {
+      id: 'openai',
+      name: 'OpenAI',
+      models: getAvailableModels('openai'),
+    },
+    {
+      id: 'openrouter',
+      name: 'OpenRouter',
+      models: getAvailableModels('openrouter'),
+    },
+    {
+      id: 'perplexity',
+      name: 'Perplexity',
+      models: getAvailableModels('perplexity'),
+    },
+    {
+      id: 'deepseek',
+      name: 'DeepSeek',
+      models: getAvailableModels('deepseek'),
+    },
+    {
+      id: 'grok',
+      name: 'Grok',
+      models: getAvailableModels('grok'),
+    },
+    {
+      id: 'qwen',
+      name: 'Qwen',
+      models: getAvailableModels('qwen'),
+    },
+    ...(isLocalhost ? [{
+      id: 'ollama' as AIProvider,
+      name: 'Local LLM (Ollama)',
+      models: getAvailableModels('ollama'),
+    }] : []),
+  ];
 
   const [columns, setColumns] = useState<ComparisonColumn[]>([
     {
@@ -103,8 +132,13 @@ const ComparisonPage: React.FC = () => {
   };
 
   const handleProviderChange = (index: number, provider: AIProvider) => {
+    const providerModels = getAvailableModels(provider);
     setColumns(prev => prev.map((col, i) => 
-      i === index ? { ...col, provider, model: '' } : col
+      i === index ? { 
+        ...col, 
+        provider, 
+        model: providerModels[0] || '' 
+      } : col
     ));
   };
 
@@ -128,43 +162,62 @@ const ComparisonPage: React.FC = () => {
 
     if (column.viewFormat === 'raw') {
       return (
-        <SyntaxHighlighter
-          language="json"
-          style={isDarkMode ? oneDark : oneLight}
-          className="rounded-lg text-sm"
-        >
-          {JSON.stringify(column.response, null, 2)}
-        </SyntaxHighlighter>
+        <pre className="font-mono text-xs whitespace-pre-wrap p-2 bg-gray-50 dark:bg-gray-900 rounded-md overflow-x-auto">
+          {column.response.content}
+        </pre>
       );
     }
 
+    let jsonContent: any = null;
+    let isValidJson = false;
+    
+    try {
+      if (column.response.format === 'json') {
+        jsonContent = JSON.parse(column.response.content);
+        isValidJson = true;
+      }
+    } catch (e) {
+      // Not valid JSON, will fallback to markdown display
+    }
+
     return (
-      <div className="prose dark:prose-invert max-w-none">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            code({ node, inline, className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  language={match[1]}
-                  style={isDarkMode ? oneDark : oneLight}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              );
-            },
-          }}
-        >
-          {column.response.content}
-        </ReactMarkdown>
+      <div className="prose dark:prose-invert prose-sm max-w-none p-2 bg-gray-50 dark:bg-gray-900 rounded-md overflow-x-auto">
+        {isValidJson ? (
+          <SyntaxHighlighter
+            language="json"
+            style={mode === 'dark' ? oneDark : oneLight}
+            customStyle={{ margin: 0, borderRadius: '0.375rem' }}
+          >
+            {JSON.stringify(jsonContent, null, 2)}
+          </SyntaxHighlighter>
+        ) : (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              code({ node, inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <SyntaxHighlighter
+                    language={match[1]}
+                    style={mode === 'dark' ? oneDark : oneLight}
+                    customStyle={{ margin: '0.5em 0', borderRadius: '0.375rem' }}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                ) : (
+                  <code className={className} {...props}>
+                    {children}
+                  </code>
+                );
+              }
+            }}
+          >
+            {column.response.content}
+          </ReactMarkdown>
+        )}
       </div>
     );
   };
@@ -174,8 +227,6 @@ const ComparisonPage: React.FC = () => {
   const runComparison = async () => {
     if (!currentPrompt) return;
 
-    const startTime = Date.now();
-
     setColumns(prev => prev.map(col => ({
       ...col,
       isLoading: true,
@@ -184,33 +235,48 @@ const ComparisonPage: React.FC = () => {
     })));
 
     try {
-      const responses = await Promise.all(
+      const responses = await Promise.allSettled(
         columns.map(async col => {
           if (!col.provider || !col.model) {
             throw new Error('Provider and model must be selected');
           }
 
+          const startTime = performance.now();
           const response = await sendPrompt({
-            provider: col.provider,
-            model: col.model,
-            prompt: currentPrompt.content,
-            temperature: currentPrompt.temperature,
+            ...currentPrompt,
+            modelConfig: {
+              ...currentPrompt.modelConfig,
+              provider: col.provider,
+              model: col.model,
+            }
           });
+          const endTime = performance.now();
 
           return {
             response,
-            responseTime: (Date.now() - startTime) / 1000,
+            responseTime: (endTime - startTime) / 1000,
           };
         })
       );
 
-      setColumns(prev => prev.map((col, i) => ({
-        ...col,
-        isLoading: false,
-        response: responses[i].response,
-        responseTime: responses[i].responseTime,
-        error: null,
-      })));
+      setColumns(prev => prev.map((col, i) => {
+        const result = responses[i];
+        if (result.status === 'fulfilled') {
+          return {
+            ...col,
+            isLoading: false,
+            response: result.value.response,
+            responseTime: result.value.responseTime,
+            error: null,
+          };
+        } else {
+          return {
+            ...col,
+            isLoading: false,
+            error: result.reason instanceof Error ? result.reason.message : 'An error occurred',
+          };
+        }
+      }));
     } catch (error) {
       setColumns(prev => prev.map(col => ({
         ...col,
@@ -221,7 +287,7 @@ const ComparisonPage: React.FC = () => {
   };
 
   if (!currentPrompt) {
-    return <Navigate to="/playground" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return (
@@ -299,15 +365,18 @@ const ComparisonPage: React.FC = () => {
                       className="select"
                     >
                       <option value="">Select Provider</option>
-                      {providers.map(provider => (
-                        <option 
-                          key={provider.id} 
-                          value={provider.id}
-                          disabled={!apiKeys[provider.id]}
-                        >
-                          {provider.name} {!apiKeys[provider.id] && '(No API Key)'}
-                        </option>
-                      ))}
+                      {providers.map(provider => {
+                        const hasApiKey = provider.id === 'ollama' || apiKeys[provider.id];
+                        return (
+                          <option 
+                            key={provider.id} 
+                            value={provider.id}
+                            disabled={!hasApiKey}
+                          >
+                            {provider.name} {!hasApiKey && '(No API Key)'}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                   
@@ -347,15 +416,15 @@ const ComparisonPage: React.FC = () => {
                       <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
                         <span title="Input tokens" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-primary-400 mr-1"></span>
-                          {column.tokenUsage?.promptTokens}
+                          {column.response.tokenUsage.promptTokens}
                         </span>
                         <span title="Output tokens" className="flex items-center">
                           <span className="w-2 h-2 rounded-full bg-secondary-400 mr-1"></span>
-                          {column.tokenUsage?.completionTokens}
+                          {column.response.tokenUsage.completionTokens}
                         </span>
                         <span title="Total tokens" className="flex items-center font-medium">
                           <span className="w-2 h-2 rounded-full bg-gray-400 mr-1"></span>
-                          {column.tokenUsage?.totalTokens}
+                          {column.response.tokenUsage.totalTokens}
                         </span>
                         {column.responseTime && (
                           <span title="Response time" className="flex items-center">

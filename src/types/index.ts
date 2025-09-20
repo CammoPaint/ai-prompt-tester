@@ -38,6 +38,12 @@ export interface SavedPrompt {
   updatedAt: string;
 }
 
+export interface CustomOpenRouterModel {
+  id: string;
+  name: string;
+  modelId: string;
+}
+
 export interface AIModelConfig {
   provider: AIProvider;
   model: string;
@@ -48,6 +54,8 @@ export interface AIModelConfig {
 export type ResponseFormat = 'json' | 'markdown';
 
 export interface PromptState {
+  id?: string;
+  title?: string;
   systemPrompt: string;
   userPrompt: string;
   responseFormat: ResponseFormat;

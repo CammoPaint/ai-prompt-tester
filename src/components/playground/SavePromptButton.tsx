@@ -4,23 +4,18 @@ import { usePromptStore } from '../../store/promptStore';
 import { useAuthStore } from '../../store/authStore';
 
 const SavePromptButton: React.FC = () => {
-  const { currentPrompt, savedPrompts, savePrompt } = usePromptStore();
+  const { currentPrompt, savePrompt } = usePromptStore();
   const { isAuthenticated } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState('');
   
-  const existingPrompt = savedPrompts.find(p => 
-    p.systemPrompt === currentPrompt.systemPrompt &&
-    p.userPrompt === currentPrompt.userPrompt
-  );
-  
   useEffect(() => {
-    if (existingPrompt) {
-      setTitle(existingPrompt.title);
+    if (currentPrompt.id && currentPrompt.title) {
+      setTitle(currentPrompt.title);
     } else {
       setTitle('');
     }
-  }, [existingPrompt]);
+  }, [currentPrompt.id, currentPrompt.title]);
   
   if (!isAuthenticated) {
     return null;
@@ -75,8 +70,8 @@ const SavePromptButton: React.FC = () => {
         type="button"
         onClick={() => {
           setIsOpen(false);
-          if (existingPrompt) {
-            setTitle(existingPrompt.title);
+          if (currentPrompt.id && currentPrompt.title) {
+            setTitle(currentPrompt.title);
           }
         }}
         className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"

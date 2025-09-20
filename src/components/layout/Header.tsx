@@ -24,6 +24,9 @@ const Header: React.FC = () => {
           <NavLink to="/" active={location.pathname === '/'}>
             Playground
           </NavLink>
+          <NavLink to="/chat" active={location.pathname === '/chat'}>
+            Chat
+          </NavLink>
           <NavLink to="/saved" active={location.pathname === '/saved'}>
             Saved Prompts
           </NavLink>
@@ -60,9 +63,12 @@ const Header: React.FC = () => {
       
       {/* Mobile navigation */}
       <nav className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="grid grid-cols-3 h-12">
+        <div className="grid grid-cols-4 h-12">
           <MobileNavLink to="/" active={location.pathname === '/'}>
             Playground
+          </MobileNavLink>
+          <MobileNavLink to="/chat" active={location.pathname === '/chat'}>
+            Chat
           </MobileNavLink>
           <MobileNavLink to="/saved" active={location.pathname === '/saved'}>
             Saved

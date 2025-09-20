@@ -205,6 +205,48 @@ npm run build
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 🆘 Troubleshooting
+
+### Common Issues
+
+#### "Failed to load custom OpenRouter models" Error
+This error occurs when Firebase is not properly configured. To fix:
+
+1. **Check your `.env` file**: Make sure you have copied `.env.example` to `.env` and filled in your Firebase credentials
+2. **Verify Firebase configuration**: Ensure all environment variables are set correctly:
+   ```env
+   VITE_FIREBASE_API_KEY=your_actual_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_actual_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_actual_sender_id
+   VITE_FIREBASE_APP_ID=your_actual_app_id
+   ```
+3. **Restart the development server**: After updating `.env`, restart with `npm run dev`
+4. **Check Firebase project**: Ensure your Firebase project has Firestore enabled and authentication configured
+
+#### API Keys Not Persisting
+- Without Firebase configuration, API keys are only stored locally in your browser
+- They will be lost when you clear browser data or use incognito mode
+- Configure Firebase to persist API keys across sessions
+
+#### Custom Models Not Available
+- Custom OpenRouter models require Firebase to be configured
+- Without Firebase, you can only use the built-in model list
+- The app will show a warning in the settings if Firebase is not configured
+
+#### "Missing or insufficient permissions" Error
+This error occurs when Firestore security rules are too restrictive. To fix:
+
+1. **Deploy updated Firestore rules**: The project includes updated security rules that handle unauthenticated users gracefully
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
+2. **Or manually update rules**: Copy the contents of `firestore.rules` to your Firebase Console → Firestore Database → Rules
+3. **Restart the app**: After updating rules, restart your development server
+
+The updated rules allow list operations for unauthenticated users while maintaining security for authenticated operations.
+
 ## 🆘 Support
 
 If you encounter any issues or have questions:

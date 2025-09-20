@@ -1,4 +1,5 @@
 import { AIProvider, AIResponse, PromptState, ResponseFormat } from '../types';
+import { CustomOpenRouterModel } from '../types';
 import { useAuthStore } from '../store/authStore';
 
 // Base configuration for API requests
@@ -220,6 +221,16 @@ export const getAvailableModels = (provider: AIProvider): string[] => {
   };
   
   return models[provider] || [];
+};
+
+// Get combined OpenRouter models (built-in + custom)
+export const getCombinedOpenRouterModels = (customModels: CustomOpenRouterModel[]): string[] => {
+  const builtInModels = getAvailableModels('openrouter');
+  const customModelIds = customModels.map(model => model.modelId);
+  
+  // Combine and remove duplicates
+  const allModels = [...builtInModels, ...customModelIds];
+  return [...new Set(allModels)];
 };
 
 // Fetch available Ollama models dynamically
