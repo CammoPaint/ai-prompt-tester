@@ -1,0 +1,20 @@
+# Firebase Configuration
+# Replace these placeholder values with your actual Firebase project credentials
+# Get these values from your Firebase Console: https://console.firebase.google.com
+
+VITE_FIREBASE_API_KEY=AIzaSyBYOtIFCE3gK0rSEfMEBLVetJE_m3H3K8A
+VITE_FIREBASE_AUTH_DOMAIN=aiprompttester-e889f.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=aiprompttester-e889f
+VITE_FIREBASE_STORAGE_BUCKET=aiprompttester-e889f.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=87148258615
+VITE_FIREBASE_APP_ID=1:87148258615:web:e0c328f72e6f91b0d666b2
+
+# Instructions:
+# 1. Go to https://console.firebase.google.com
+# 2. Create a new project or select an existing one
+# 3. Go to Project Settings > General > Your apps
+# 4. Add a web app or select an existing one
+# 5. Copy the config values and replace the placeholders above
+# 6. Enable Authentication with Email/Password in Firebase Console
+# 7. Create a Firestore database in Firebase Console
+# 8. Restart your development server after updating these values
