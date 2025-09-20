@@ -44,12 +44,9 @@ service cloud.firestore {
     
     // Rules for workspaces collection
     match /workspaces/{workspaceId} {
-      // Allow get if the document belongs to the authenticated user
-      allow get: if isOwner(resource.data.userId);
-      
-      // Allow list if user is authenticated and querying their own documents
-      // Also allow list for unauthenticated users (will return empty results)
-      allow list: if request.auth == null || (request.auth != null && request.query.limit <= 50);
+      // Allow read operations if the document belongs to the authenticated user
+      // For unauthenticated users, allow read but they'll get empty results
+      allow read: if request.auth == null || isOwner(resource.data.userId);
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -65,12 +62,9 @@ service cloud.firestore {
     
     // Rules for threads collection
     match /threads/{threadId} {
-      // Allow get if the document belongs to the authenticated user
-      allow get: if isOwner(resource.data.userId);
-      
-      // Allow list if user is authenticated and querying their own documents
-      // Also allow list for unauthenticated users (will return empty results)
-      allow list: if request.auth == null || (request.auth != null && request.query.limit <= 50);
+      // Allow read operations if the document belongs to the authenticated user
+      // For unauthenticated users, allow read but they'll get empty results
+      allow read: if request.auth == null || isOwner(resource.data.userId);
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
