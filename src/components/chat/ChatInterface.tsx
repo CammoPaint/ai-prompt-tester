@@ -380,23 +380,23 @@ const ChatInterface: React.FC = () => {
       )}
       
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-w-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {currentThread.messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} min-w-0`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] min-w-0 rounded-lg p-3 ${
+              className={`max-w-[80%] rounded-lg p-3 break-words ${
                 message.role === 'user'
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden w-full'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
               }`}
             >
               {message.role === 'user' ? (
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap break-words">{message.content}</p>
               ) : (
-                <div className="prose dark:prose-invert prose-sm max-w-none overflow-hidden">
+                <div className="prose dark:prose-invert prose-sm max-w-none break-words">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -404,29 +404,42 @@ const ChatInterface: React.FC = () => {
                       code({ className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
                         return !props.inline && match ? (
-                          <SyntaxHighlighter
-                            language={match[1]}
-                            style={mode === 'dark' ? oneDark : oneLight}
-                            customStyle={{ 
-                              margin: '0.5em 0', 
-                              borderRadius: '0.375rem',
-                              width: '100%',
-                              maxWidth: '100%',
-                              overflow: 'hidden',
-                              wordWrap: 'break-word',
-                              whiteSpace: 'pre-wrap',
-                              fontSize: '0.75rem'
-                            }}
-                            wrapLines={true}
-                            wrapLongLines={true}
-                            PreTag="div"
-                          >
-                            {String(children).replace(/\n$/, '')}
-                          </SyntaxHighlighter>
+                          <div className="overflow-x-auto">
+                            <SyntaxHighlighter
+                              language={match[1]}
+                              style={mode === 'dark' ? oneDark : oneLight}
+                              customStyle={{ 
+                                margin: '0.5em 0', 
+                                borderRadius: '0.375rem',
+                                fontSize: '0.75rem',
+                                background: mode === 'dark' ? '#1e1e1e' : '#f8f8f8'
+                              }}
+                              wrapLines={true}
+                              wrapLongLines={true}
+                              PreTag="div"
+                              codeTagProps={{
+                                style: {
+                                  wordBreak: 'break-word',
+                                  whiteSpace: 'pre-wrap'
+                                }
+                              }}
+                            >
+                              {String(children).replace(/\n$/, '')}
+                            </SyntaxHighlighter>
+                          </div>
                         ) : (
-                          <code className={`${className} break-words`} {...props}>
+                          <code className={`${className} break-words bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-xs`} {...props}>
                             {children}
                           </code>
+                        );
+                      },
+                      pre({ children, ...props }: any) {
+                        return (
+                          <div className="overflow-x-auto">
+                            <pre {...props} className="overflow-x-auto">
+                              {children}
+                            </pre>
+                          </div>
                         );
                       }
                     }}
