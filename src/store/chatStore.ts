@@ -49,8 +49,8 @@ const defaultWorkspace: Workspace = {
   provider: 'openai',
   model: 'gpt-4o',
   threads: [],
-  createdAt: '',
-  updatedAt: ''
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
 };
 
 export const useChatStore = create<ChatStoreState>()(
@@ -68,6 +68,7 @@ export const useChatStore = create<ChatStoreState>()(
         const { user } = useAuthStore.getState();
         if (!user) throw new Error('User must be logged in');
         
+        const now = new Date().toISOString();
         const workspace: Workspace = {
           id: '',
           userId: user.id,
@@ -76,8 +77,8 @@ export const useChatStore = create<ChatStoreState>()(
           provider: 'openai',
           model: 'gpt-4o',
           threads: [],
-          createdAt: '',
-          updatedAt: ''
+          createdAt: now,
+          updatedAt: now
         };
         
         try {
@@ -127,7 +128,10 @@ export const useChatStore = create<ChatStoreState>()(
       },
       
       setCurrentWorkspace: (workspace) => {
-        set({ currentWorkspace: workspace });
+        set({ 
+          currentWorkspace: workspace,
+          currentThread: null // Clear current thread when changing workspace
+        });
         if (workspace) {
           get().loadThreads(workspace.id);
         }
@@ -135,7 +139,11 @@ export const useChatStore = create<ChatStoreState>()(
       
       loadWorkspaces: async () => {
         const { user } = useAuthStore.getState();
-        if (!user) return;
+        if (!user) {
+          console.warn('No authenticated user found. Skipping workspace load.');
+          set({ workspaces: [] });
+          return;
+        }
         
         try {
           const workspaces = await getWorkspacesFromFirestore(user.id);
@@ -145,8 +153,16 @@ export const useChatStore = create<ChatStoreState>()(
           if (workspaces.length > 0 && !get().currentWorkspace) {
             get().setCurrentWorkspace(workspaces[0]);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.warn('Failed to load workspaces:', error);
+          
+          // Handle specific Firebase errors
+          if (error.code === 'permission-denied') {
+            console.warn('Permission denied: User may not be properly authenticated');
+          } else if (error.code === 'unauthenticated') {
+            console.warn('User is not authenticated');
+          }
+          
           // Set empty workspaces array on error
           set({ workspaces: [] });
         }
@@ -158,6 +174,7 @@ export const useChatStore = create<ChatStoreState>()(
         const { currentWorkspace } = get();
         if (!user || !currentWorkspace) throw new Error('User and workspace required');
         
+        const now = new Date().toISOString();
         const thread: ChatThread = {
           id: '',
           workspaceId,
@@ -166,8 +183,8 @@ export const useChatStore = create<ChatStoreState>()(
           messages: [],
           provider: currentWorkspace.provider,
           model: currentWorkspace.model,
-          createdAt: '',
-          updatedAt: ''
+          createdAt: now,
+          updatedAt: now
         };
         
         try {
@@ -221,13 +238,25 @@ export const useChatStore = create<ChatStoreState>()(
       
       loadThreads: async (workspaceId) => {
         const { user } = useAuthStore.getState();
-        if (!user) return;
+        if (!user) {
+          console.warn('No authenticated user found. Skipping thread load.');
+          set({ threads: [] });
+          return;
+        }
         
         try {
           const threads = await getThreadsFromFirestore(user.id, workspaceId);
           set({ threads });
-        } catch (error) {
+        } catch (error: any) {
           console.warn('Failed to load threads:', error);
+          
+          // Handle specific Firebase errors
+          if (error.code === 'permission-denied') {
+            console.warn('Permission denied: User may not be properly authenticated');
+          } else if (error.code === 'unauthenticated') {
+            console.warn('User is not authenticated');
+          }
+          
           // Set empty threads array on error
           set({ threads: [] });
         }
