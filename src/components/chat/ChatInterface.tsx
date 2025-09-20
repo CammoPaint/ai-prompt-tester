@@ -380,23 +380,23 @@ const ChatInterface: React.FC = () => {
       )}
       
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-w-0">
         {currentThread.messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} min-w-0`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
+              className={`max-w-[80%] min-w-0 rounded-lg p-3 ${
                 message.role === 'user'
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden'
               }`}
             >
               {message.role === 'user' ? (
                 <p className="whitespace-pre-wrap">{message.content}</p>
               ) : (
-                <div className="prose dark:prose-invert prose-sm max-w-none">
+                <div className="prose dark:prose-invert prose-sm max-w-none overflow-x-auto">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -407,13 +407,18 @@ const ChatInterface: React.FC = () => {
                           <SyntaxHighlighter
                             language={match[1]}
                             style={mode === 'dark' ? oneDark : oneLight}
-                            customStyle={{ margin: '0.5em 0', borderRadius: '0.375rem' }}
+                            customStyle={{ 
+                              margin: '0.5em 0', 
+                              borderRadius: '0.375rem',
+                              maxWidth: '100%',
+                              overflow: 'auto'
+                            }}
                             PreTag="div"
                           >
                             {String(children).replace(/\n$/, '')}
                           </SyntaxHighlighter>
                         ) : (
-                          <code className={className} {...props}>
+                          <code className={`${className} break-all`} {...props}>
                             {children}
                           </code>
                         );
