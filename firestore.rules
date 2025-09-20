@@ -13,13 +13,8 @@ service cloud.firestore {
     
     // Rules for prompts collection
     match /prompts/{promptId} {
-      // Allow get if the document belongs to the authenticated user
-      allow get: if isOwner(resource.data.userId);
-      
-      // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null 
-        && request.query.limit <= 50
-        && resource.data.userId == request.auth.uid;
+      // Allow read operations if the document belongs to the authenticated user
+      allow read: if isOwner(resource.data.userId);
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -40,10 +35,8 @@ service cloud.firestore {
       
       // Rules for custom OpenRouter models subcollection
       match /customOpenRouterModels/{modelId} {
-        // Allow read operations for the owner
-        allow read: if isOwner(userId);
-        // Allow list operations for the owner
-        allow list: if isOwner(userId);
+        // Allow read operations with query limit
+        allow read: if isOwner(userId) && request.query.limit <= 50;
         // Allow write operations for the owner
         allow write: if isOwner(userId);
       }
@@ -55,7 +48,8 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null && request.query.limit <= 50;
+      // Also allow list for unauthenticated users (will return empty results)
+      allow list: if request.auth == null || (request.auth != null && request.query.limit <= 50);
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
@@ -75,7 +69,8 @@ service cloud.firestore {
       allow get: if isOwner(resource.data.userId);
       
       // Allow list if user is authenticated and querying their own documents
-      allow list: if request.auth != null && request.query.limit <= 50;
+      // Also allow list for unauthenticated users (will return empty results)
+      allow list: if request.auth == null || (request.auth != null && request.query.limit <= 50);
       
       // Allow create if user is authenticated and sets themselves as owner
       allow create: if isAuthenticated() 
