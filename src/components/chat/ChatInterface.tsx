@@ -411,14 +411,19 @@ const ChatInterface: React.FC = () => {
                               margin: '0.5em 0', 
                               borderRadius: '0.375rem',
                               maxWidth: '100%',
-                              overflow: 'auto'
+                              overflow: 'auto',
+                              wordWrap: 'break-word',
+                              whiteSpace: 'pre-wrap',
+                              fontSize: '0.875rem'
                             }}
+                            wrapLines={true}
+                            wrapLongLines={true}
                             PreTag="div"
                           >
                             {String(children).replace(/\n$/, '')}
                           </SyntaxHighlighter>
                         ) : (
-                          <code className={`${className} break-all`} {...props}>
+                          <code className={`${className} break-words`} {...props}>
                             {children}
                           </code>
                         );
