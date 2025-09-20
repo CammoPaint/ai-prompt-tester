@@ -84,6 +84,11 @@ export const getWorkspacesFromFirestore = async (userId: string) => {
     return []; // Return empty array instead of throwing error
   }
   
+  if (!userId) {
+    console.warn('No userId provided to getWorkspacesFromFirestore');
+    return [];
+  }
+  
   try {
     const workspacesRef = collection(db, 'workspaces');
     const q = query(
@@ -101,8 +106,16 @@ export const getWorkspacesFromFirestore = async (userId: string) => {
     return workspaces.sort((a, b) => 
       new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching workspaces:', error);
+    
+    // Handle specific Firebase errors
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied: User may not be properly authenticated');
+    } else if (error.code === 'unauthenticated') {
+      console.warn('User is not authenticated');
+    }
+    
     return []; // Return empty array on error
   }
 };
@@ -168,6 +181,11 @@ export const getThreadsFromFirestore = async (userId: string, workspaceId?: stri
     return []; // Return empty array instead of throwing error
   }
   
+  if (!userId) {
+    console.warn('No userId provided to getThreadsFromFirestore');
+    return [];
+  }
+  
   try {
     const threadsRef = collection(db, 'threads');
     let q = query(
@@ -194,8 +212,16 @@ export const getThreadsFromFirestore = async (userId: string, workspaceId?: stri
     return threads.sort((a, b) => 
       new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching threads:', error);
+    
+    // Handle specific Firebase errors
+    if (error.code === 'permission-denied') {
+      console.warn('Permission denied: User may not be properly authenticated');
+    } else if (error.code === 'unauthenticated') {
+      console.warn('User is not authenticated');
+    }
+    
     return []; // Return empty array on error
   }
 };
