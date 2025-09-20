@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, Trash2, Edit2, Check, X, Plus, AlertTriangle } from 'lucide-react';
 import { useChatStore } from '../../store/chatStore';
 import { getProviderColor } from '../../utils/theme';
 
@@ -9,41 +9,55 @@ const ThreadList: React.FC = () => {
     currentThread, 
     currentWorkspace,
     setCurrentThread, 
-    createThread, 
     deleteThread,
-    updateThread
+    updateThread,
+    createThread
   } = useChatStore();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newThreadTitle, setNewThreadTitle] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  
+  // Filter threads by current workspace
+  const workspaceThreads = threads.filter(thread => 
+    thread.workspaceId === currentWorkspace?.id
+  );
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
   
-  const handleCreateThread = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newThreadTitle.trim() || !currentWorkspace) return;
+  // Handle Escape key to close dialog
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showDeleteConfirm) {
+        cancelDeleteThread();
+      }
+    };
     
-    setIsCreating(true);
+    if (showDeleteConfirm) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showDeleteConfirm]);
+  
+  const handleDeleteThread = (threadId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setThreadToDelete(threadId);
+    setShowDeleteConfirm(true);
+  };
+  
+  const confirmDeleteThread = async () => {
+    if (!threadToDelete) return;
+    
     try {
-      await createThread(newThreadTitle.trim(), currentWorkspace.id);
-      setNewThreadTitle('');
-      setShowCreateForm(false);
+      await deleteThread(threadToDelete);
+      setShowDeleteConfirm(false);
+      setThreadToDelete(null);
     } catch (error) {
-      console.error('Failed to create thread:', error);
-    } finally {
-      setIsCreating(false);
+      console.error('Failed to delete thread:', error);
     }
   };
   
-  const handleDeleteThread = async (threadId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Are you sure you want to delete this thread?')) {
-      try {
-        await deleteThread(threadId);
-      } catch (error) {
-        console.error('Failed to delete thread:', error);
-      }
-    }
+  const cancelDeleteThread = () => {
+    setShowDeleteConfirm(false);
+    setThreadToDelete(null);
   };
   
   const handleEditThread = (thread: any, e: React.MouseEvent) => {
@@ -69,6 +83,16 @@ const ThreadList: React.FC = () => {
     setEditTitle('');
   };
   
+  const handleCreateThread = async () => {
+    if (!currentWorkspace) return;
+    
+    try {
+      await createThread('New Chat', currentWorkspace.id);
+    } catch (error) {
+      console.error('Failed to create thread:', error);
+    }
+  };
+  
   if (!currentWorkspace) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -79,74 +103,33 @@ const ThreadList: React.FC = () => {
   
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-sm text-gray-700 dark:text-gray-300">Threads</h3>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {threads.length}
-          </span>
-        </div>
-        
-        {/* Create New Thread */}
-        {showCreateForm ? (
-          <form onSubmit={handleCreateThread} className="space-y-2">
-            <input
-              type="text"
-              value={newThreadTitle}
-              onChange={(e) => setNewThreadTitle(e.target.value)}
-              placeholder="Thread title"
-              className="input text-sm"
-              autoFocus
-              required
-            />
-            <div className="flex space-x-2">
-              <button
-                type="submit"
-                disabled={isCreating || !newThreadTitle.trim()}
-                className="btn-primary text-sm flex-1"
-              >
-                {isCreating ? 'Creating...' : 'Create'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setNewThreadTitle('');
-                }}
-                className="btn-outline text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        ) : (
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="w-full flex items-center justify-center p-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-primary-400 dark:hover:border-primary-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            New Thread
-          </button>
-        )}
+      {/* New Thread Button */}
+      <div className="p-1">
+        <button
+          onClick={handleCreateThread}
+          className="w-full flex items-center justify-center px-2 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+        >
+          <Plus className="w-3 h-3 mr-1.5" />
+          <span className="text-xs font-medium">New Thread</span>
+        </button>
       </div>
       
       {/* Thread List */}
       <div className="flex-1 overflow-y-auto">
-        {threads.length === 0 ? (
+        {workspaceThreads.length === 0 ? (
           <div className="p-4 text-center text-gray-500 dark:text-gray-400">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No threads yet</p>
-            <p className="text-xs">Create your first thread to start chatting</p>
           </div>
         ) : (
-          <div className="space-y-1 p-2">
-            {threads.map(thread => (
+          <div className="space-y-1">
+            {workspaceThreads.map(thread => (
               <div
                 key={thread.id}
                 onClick={() => setCurrentThread(thread)}
-                className={`p-3 rounded-lg cursor-pointer group transition-colors ${
+                className={`px-3 py-2 cursor-pointer group transition-colors ${
                   currentThread?.id === thread.id
-                    ? 'bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800'
+                    ? 'bg-gray-200 dark:bg-gray-700'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
@@ -202,7 +185,7 @@ const ThreadList: React.FC = () => {
                             {thread.provider} · {thread.model}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {thread.messages.length} messages
+                            {thread.updatedAt ? new Date(thread.updatedAt).toLocaleDateString() : 'Just now'}
                           </span>
                         </div>
                         {thread.messages.length > 0 && (
@@ -219,6 +202,49 @@ const ThreadList: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={cancelDeleteThread}
+        >
+          <div 
+            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-10 h-10 mx-auto bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-error-600 dark:text-error-400" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Delete Thread
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Are you sure you want to delete this thread? This action cannot be undone.
+                </p>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    onClick={cancelDeleteThread}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDeleteThread}
+                    className="px-4 py-2 text-sm font-medium text-white bg-error-600 hover:bg-error-700 rounded-lg transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

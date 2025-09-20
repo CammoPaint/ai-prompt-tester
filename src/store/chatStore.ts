@@ -49,8 +49,8 @@ const defaultWorkspace: Workspace = {
   provider: 'openai',
   model: 'gpt-4o',
   threads: [],
-  createdAt: '',
-  updatedAt: ''
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
 };
 
 export const useChatStore = create<ChatStoreState>()(
@@ -68,6 +68,7 @@ export const useChatStore = create<ChatStoreState>()(
         const { user } = useAuthStore.getState();
         if (!user) throw new Error('User must be logged in');
         
+        const now = new Date().toISOString();
         const workspace: Workspace = {
           id: '',
           userId: user.id,
@@ -76,8 +77,8 @@ export const useChatStore = create<ChatStoreState>()(
           provider: 'openai',
           model: 'gpt-4o',
           threads: [],
-          createdAt: '',
-          updatedAt: ''
+          createdAt: now,
+          updatedAt: now
         };
         
         try {
@@ -127,7 +128,10 @@ export const useChatStore = create<ChatStoreState>()(
       },
       
       setCurrentWorkspace: (workspace) => {
-        set({ currentWorkspace: workspace });
+        set({ 
+          currentWorkspace: workspace,
+          currentThread: null // Clear current thread when changing workspace
+        });
         if (workspace) {
           get().loadThreads(workspace.id);
         }
@@ -170,6 +174,7 @@ export const useChatStore = create<ChatStoreState>()(
         const { currentWorkspace } = get();
         if (!user || !currentWorkspace) throw new Error('User and workspace required');
         
+        const now = new Date().toISOString();
         const thread: ChatThread = {
           id: '',
           workspaceId,
@@ -178,8 +183,8 @@ export const useChatStore = create<ChatStoreState>()(
           messages: [],
           provider: currentWorkspace.provider,
           model: currentWorkspace.model,
-          createdAt: '',
-          updatedAt: ''
+          createdAt: now,
+          updatedAt: now
         };
         
         try {

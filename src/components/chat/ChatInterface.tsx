@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, RotateCcw, Copy, Check } from 'lucide-react';
+import { Send, Loader2, RotateCcw, Copy, Check, X } from 'lucide-react';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { sendChatMessage } from '../../services/chatService';
 import { getProviderColor } from '../../utils/theme';
+import { getAvailableModels } from '../../services/apiService';
+import { AIProvider } from '../../types';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -17,6 +19,8 @@ const ChatInterface: React.FC = () => {
     currentThread, 
     addMessage, 
     updateMessage,
+    createThread,
+    updateThread,
     isLoading, 
     setLoading, 
     setError 
@@ -25,6 +29,11 @@ const ChatInterface: React.FC = () => {
   const { mode } = useThemeStore();
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editingModel, setEditingModel] = useState(false);
+  const [editModel, setEditModel] = useState('');
+  const [editProvider, setEditProvider] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -50,10 +59,25 @@ const ChatInterface: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !currentThread || !currentWorkspace || isLoading) return;
+    if (!input.trim() || !currentWorkspace || isLoading) return;
     
     const userMessage = input.trim();
     setInput('');
+    
+    // Create new thread if none exists
+    let thread = currentThread;
+    if (!thread) {
+      try {
+        await createThread('New Chat', currentWorkspace.id);
+        thread = useChatStore.getState().currentThread;
+      } catch (error) {
+        console.error('Failed to create thread:', error);
+        setError('Failed to create new thread');
+        return;
+      }
+    }
+    
+    if (!thread) return;
     
     // Add user message
     addMessage({
@@ -62,8 +86,8 @@ const ChatInterface: React.FC = () => {
     });
     
     // Check API key
-    const { provider } = currentThread;
-    if (provider !== 'ollama' && !apiKeys[provider]) {
+    const { provider } = thread;
+    if (provider !== 'ollama' && !apiKeys[provider as keyof typeof apiKeys]) {
       setError(`Please set your ${provider} API key in the settings`);
       return;
     }
@@ -73,7 +97,7 @@ const ChatInterface: React.FC = () => {
     
     try {
       // Prepare messages for API (include system prompt from workspace)
-      const messages = currentThread.messages.concat([{
+      const messages = thread.messages.concat([{
         id: Date.now().toString(),
         role: 'user' as const,
         content: userMessage,
@@ -82,8 +106,8 @@ const ChatInterface: React.FC = () => {
       
       const response = await sendChatMessage(
         messages,
-        currentThread.provider,
-        currentThread.model,
+        thread.provider,
+        thread.model,
         currentWorkspace.systemPrompt
       );
       
@@ -120,6 +144,68 @@ const ChatInterface: React.FC = () => {
     }
   };
   
+  // Thread editing handlers
+  const handleEditTitle = () => {
+    if (!currentThread) return;
+    setEditingTitle(true);
+    setEditTitle(currentThread.title);
+  };
+  
+  const handleSaveTitle = async () => {
+    if (!currentThread || !editTitle.trim()) return;
+    
+    try {
+      await updateThread(currentThread.id, { title: editTitle.trim() });
+      setEditingTitle(false);
+      setEditTitle('');
+    } catch (error) {
+      console.error('Failed to update title:', error);
+    }
+  };
+  
+  const handleCancelTitleEdit = () => {
+    setEditingTitle(false);
+    setEditTitle('');
+  };
+  
+  const handleEditModel = () => {
+    if (!currentThread) return;
+    setEditingModel(true);
+    setEditModel(currentThread.model);
+    setEditProvider(currentThread.provider);
+  };
+  
+  const handleSaveModel = async () => {
+    if (!currentThread || !editModel.trim() || !editProvider.trim()) return;
+    
+    try {
+      await updateThread(currentThread.id, { 
+        provider: editProvider.trim(),
+        model: editModel.trim() 
+      });
+      setEditingModel(false);
+      setEditModel('');
+      setEditProvider('');
+    } catch (error) {
+      console.error('Failed to update model:', error);
+    }
+  };
+  
+  const handleCancelModelEdit = () => {
+    setEditingModel(false);
+    setEditModel('');
+    setEditProvider('');
+  };
+  
+  const handleProviderChange = (newProvider: string) => {
+    setEditProvider(newProvider);
+    // Reset model to first available model for new provider
+    const availableModels = getAvailableModels(newProvider as AIProvider);
+    if (availableModels.length > 0) {
+      setEditModel(availableModels[0]);
+    }
+  };
+  
   const regenerateResponse = async (messageIndex: number) => {
     if (!currentThread || !currentWorkspace || isLoading) return;
     
@@ -127,7 +213,6 @@ const ChatInterface: React.FC = () => {
     const userMessageIndex = messageIndex - 1;
     if (userMessageIndex < 0 || currentThread.messages[userMessageIndex].role !== 'user') return;
     
-    const userMessage = currentThread.messages[userMessageIndex];
     const messagesUpToUser = currentThread.messages.slice(0, userMessageIndex + 1);
     
     setLoading(true);
@@ -160,19 +245,139 @@ const ChatInterface: React.FC = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-semibold">{currentThread.title}</h1>
-            <p className={`text-sm ${getProviderColor(currentThread.provider)}`}>
+      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="flex items-center space-x-3">
+          {/* Thread Title Editing */}
+          {editingTitle ? (
+            <div className="flex items-center space-x-2 flex-1">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="input text-sm font-medium flex-1"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveTitle();
+                  if (e.key === 'Escape') handleCancelTitleEdit();
+                }}
+              />
+              <button
+                onClick={handleSaveTitle}
+                className="p-1 text-success-600 hover:bg-success-100 dark:hover:bg-success-900/30 rounded"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                onClick={handleCancelTitleEdit}
+                className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <h1 
+              className="text-sm font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
+              onClick={handleEditTitle}
+              title="Click to edit title"
+            >
+              {currentThread.title}
+            </h1>
+          )}
+          
+          {/* Separator */}
+          <span className="text-gray-300 dark:text-gray-600">·</span>
+          
+          {/* Provider & Model Editing */}
+          {editingModel ? (
+            <div className="flex items-center space-x-1">
+              <select
+                value={editProvider}
+                onChange={(e) => handleProviderChange(e.target.value)}
+                className="input text-xs w-20"
+                autoFocus
+              >
+                <option value="openai">OpenAI</option>
+                <option value="openrouter">OpenRouter</option>
+                <option value="perplexity">Perplexity</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="grok">Grok</option>
+                <option value="qwen">Qwen</option>
+                <option value="ollama">Ollama</option>
+              </select>
+              <select
+                value={editModel}
+                onChange={(e) => setEditModel(e.target.value)}
+                className="input text-xs flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveModel();
+                  if (e.key === 'Escape') handleCancelModelEdit();
+                }}
+              >
+                {getAvailableModels(editProvider as AIProvider).map(model => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleSaveModel}
+                className="p-1 text-success-600 hover:bg-success-100 dark:hover:bg-success-900/30 rounded"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                onClick={handleCancelModelEdit}
+                className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <span 
+              className={`text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors ${getProviderColor(currentThread.provider)}`}
+              onClick={handleEditModel}
+              title="Click to change provider and model"
+            >
               {currentThread.provider} · {currentThread.model}
-            </p>
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {currentThread.messages.length} messages
-          </div>
+            </span>
+          )}
         </div>
       </div>
+      
+      {/* New Chat Input - ChatGPT Style */}
+      {!currentThread && (
+        <div className="p-6">
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+                placeholder={`New chat in ${currentWorkspace?.name || 'workspace'}`}
+                className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+              <button
+                onClick={handleSubmit}
+                disabled={!input.trim() || isLoading}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -196,15 +401,14 @@ const ChatInterface: React.FC = () => {
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
                     components={{
-                      code({ node, inline, className, children, ...props }) {
+                      code({ className, children, ...props }: any) {
                         const match = /language-(\w+)/.exec(className || '');
-                        return !inline && match ? (
+                        return !props.inline && match ? (
                           <SyntaxHighlighter
                             language={match[1]}
                             style={mode === 'dark' ? oneDark : oneLight}
                             customStyle={{ margin: '0.5em 0', borderRadius: '0.375rem' }}
                             PreTag="div"
-                            {...props}
                           >
                             {String(children).replace(/\n$/, '')}
                           </SyntaxHighlighter>
@@ -275,34 +479,36 @@ const ChatInterface: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
       
-      {/* Input */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <form onSubmit={handleSubmit} className="flex items-end space-x-2">
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              className="input resize-none pr-12"
-              style={{ minHeight: '44px', maxHeight: '120px' }}
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="absolute right-2 bottom-2 p-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Input - Only show when there's a current thread */}
+      {currentThread && (
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <form onSubmit={handleSubmit} className="flex items-end space-x-2">
+            <div className="flex-1 relative">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Type your message..."
+                className="input resize-none pr-12"
+                style={{ minHeight: '44px', maxHeight: '120px' }}
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="absolute right-2 bottom-2 p-2 rounded-full bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

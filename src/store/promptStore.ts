@@ -211,14 +211,9 @@ export const usePromptStore = create<PromptStoreState>()(
       
       loadPrompts: async () => {
         const { user } = useAuthStore.getState();
-        console.log('loadPrompts called, user:', user);
-        if (!user) {
-          console.log('No user found, skipping loadPrompts');
-          return;
-        }
+        if (!user) return;
         
         try {
-          console.log('Loading prompts for user:', user.id);
           const prompts = await getPromptsFromFirestore(user.id);
           set({ savedPrompts: prompts });
         } catch (error) {
