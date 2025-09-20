@@ -9,15 +9,18 @@ const ThreadList: React.FC = () => {
     currentThread, 
     currentWorkspace,
     setCurrentThread, 
+    createThread, 
     deleteThread,
-    updateThread,
-    createThread
+    updateThread
   } = useChatStore();
   
   // Filter threads by current workspace
   const workspaceThreads = threads.filter(thread => 
     thread.workspaceId === currentWorkspace?.id
   );
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newThreadTitle, setNewThreadTitle] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -36,6 +39,22 @@ const ThreadList: React.FC = () => {
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [showDeleteConfirm]);
+  
+  const handleCreateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newThreadTitle.trim() || !currentWorkspace) return;
+    
+    setIsCreating(true);
+    try {
+      await createThread(newThreadTitle.trim(), currentWorkspace.id);
+      setNewThreadTitle('');
+      setShowCreateForm(false);
+    } catch (error) {
+      console.error('Failed to create thread:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
   
   const handleDeleteThread = (threadId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -83,16 +102,6 @@ const ThreadList: React.FC = () => {
     setEditTitle('');
   };
   
-  const handleCreateThread = async () => {
-    if (!currentWorkspace) return;
-    
-    try {
-      await createThread('New Chat', currentWorkspace.id);
-    } catch (error) {
-      console.error('Failed to create thread:', error);
-    }
-  };
-  
   if (!currentWorkspace) {
     return (
       <div className="p-4 text-center text-gray-500 dark:text-gray-400">
@@ -103,15 +112,55 @@ const ThreadList: React.FC = () => {
   
   return (
     <div className="flex flex-col h-full">
-      {/* New Thread Button */}
-      <div className="p-1">
-        <button
-          onClick={handleCreateThread}
-          className="w-full flex items-center justify-center px-2 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-        >
-          <Plus className="w-3 h-3 mr-1.5" />
-          <span className="text-xs font-medium">New Thread</span>
-        </button>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-sm text-gray-700 dark:text-gray-300">Threads</h3>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {workspaceThreads.length}
+          </span>
+        </div>
+        
+        {/* Create New Thread */}
+        {showCreateForm ? (
+          <form onSubmit={handleCreateThread} className="space-y-2">
+            <input
+              type="text"
+              value={newThreadTitle}
+              onChange={(e) => setNewThreadTitle(e.target.value)}
+              placeholder="Thread title"
+              className="input text-sm"
+              autoFocus
+              required
+            />
+            <div className="flex space-x-2">
+              <button
+                type="submit"
+                disabled={isCreating || !newThreadTitle.trim()}
+                className="btn-primary text-sm flex-1"
+              >
+                {isCreating ? 'Creating...' : 'Create'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateForm(false);
+                  setNewThreadTitle('');
+                }}
+                className="btn-outline text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="w-full flex items-center justify-center p-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-primary-400 dark:hover:border-primary-600 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New Thread
+          </button>
+        )}
       </div>
       
       {/* Thread List */}
@@ -120,16 +169,17 @@ const ThreadList: React.FC = () => {
           <div className="p-4 text-center text-gray-500 dark:text-gray-400">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No threads yet</p>
+            <p className="text-xs">Create your first thread to start chatting</p>
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-1 p-2">
             {workspaceThreads.map(thread => (
               <div
                 key={thread.id}
                 onClick={() => setCurrentThread(thread)}
-                className={`px-3 py-2 cursor-pointer group transition-colors ${
+                className={`p-3 rounded-lg cursor-pointer group transition-colors ${
                   currentThread?.id === thread.id
-                    ? 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
@@ -185,7 +235,7 @@ const ThreadList: React.FC = () => {
                             {thread.provider} · {thread.model}
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {thread.updatedAt ? new Date(thread.updatedAt).toLocaleDateString() : 'Just now'}
+                            {thread.messages.length} messages
                           </span>
                         </div>
                         {thread.messages.length > 0 && (
