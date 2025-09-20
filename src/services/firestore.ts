@@ -57,25 +57,19 @@ export const getPromptsFromFirestore = async (userId: string) => {
   }
   
   if (!userId) {
-    console.warn('No userId provided to getPromptsFromFirestore');
     return [];
   }
   
   try {
-    console.log('Fetching prompts for userId:', userId);
     const promptsRef = collection(db, 'prompts');
     const q = query(promptsRef, where('userId', '==', userId));
     const querySnapshot = await getDocs(q);
     
-    const prompts = querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as SavedPrompt[];
-    
-    console.log('Fetched prompts:', prompts.length);
-    return prompts;
   } catch (error) {
-    console.error('Firestore error:', error);
     throw new Error('Failed to fetch prompts from Firestore');
   }
 };
