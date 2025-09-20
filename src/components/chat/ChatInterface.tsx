@@ -390,13 +390,13 @@ const ChatInterface: React.FC = () => {
               className={`max-w-[80%] min-w-0 rounded-lg p-3 ${
                 message.role === 'user'
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 overflow-hidden w-full'
               }`}
             >
               {message.role === 'user' ? (
                 <p className="whitespace-pre-wrap">{message.content}</p>
               ) : (
-                <div className="prose dark:prose-invert prose-sm max-w-none overflow-x-auto">
+                <div className="prose dark:prose-invert prose-sm max-w-none overflow-hidden">
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeRaw]}
@@ -410,11 +410,12 @@ const ChatInterface: React.FC = () => {
                             customStyle={{ 
                               margin: '0.5em 0', 
                               borderRadius: '0.375rem',
+                              width: '100%',
                               maxWidth: '100%',
-                              overflow: 'auto',
+                              overflow: 'hidden',
                               wordWrap: 'break-word',
                               whiteSpace: 'pre-wrap',
-                              fontSize: '0.875rem'
+                              fontSize: '0.75rem'
                             }}
                             wrapLines={true}
                             wrapLongLines={true}
