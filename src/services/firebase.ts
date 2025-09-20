@@ -19,12 +19,7 @@ const firebaseConfig = {
 
 // Check if Firebase config is properly set
 const isFirebaseConfigured = Object.values(firebaseConfig).every(value => 
-  value && 
-  value !== 'undefined' && 
-  !value.includes('your_') && 
-  !value.includes('demo-') &&
-  !value.includes('_here') &&
-  value.trim() !== ''
+  value && value !== 'undefined' && !value.includes('your_') && !value.includes('demo-')
 );
 
 let app: any = null;
