@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Eye, EyeOff, Key, Plus, Trash2 } from 'lucide-react';
+import { Check, Eye, EyeOff, Key, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { ApiKeys } from '../../types';
 
@@ -97,6 +97,25 @@ const ApiKeysForm: React.FC = () => {
   
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
+      {/* Firebase Configuration Notice */}
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+        <div className="flex items-start">
+          <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Firebase Configuration Required
+            </h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              To persist your API keys and custom models across sessions, you need to configure Firebase.
+              Copy <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded text-xs">.env.example</code> to <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded text-xs">.env</code> and add your Firebase project credentials.
+            </p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+              Without Firebase, your API keys will only be stored locally in your browser and custom models won't be available.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-lg font-medium">API Keys</h2>
