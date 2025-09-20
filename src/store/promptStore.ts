@@ -217,8 +217,7 @@ export const usePromptStore = create<PromptStoreState>()(
           const prompts = await getPromptsFromFirestore(user.id);
           set({ savedPrompts: prompts });
         } catch (error) {
-          console.warn('Failed to load prompts:', error);
-          set({ savedPrompts: [] });
+          console.error('Failed to load prompts:', error);
         }
       }
     }),
