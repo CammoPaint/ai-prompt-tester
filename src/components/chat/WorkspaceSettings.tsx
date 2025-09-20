@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 import { Workspace } from '../../types/chat';
 import { AIProvider } from '../../types';
@@ -21,6 +21,20 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
     model: workspace.model
   });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
   
   // Check if we're running locally for Ollama availability
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -63,16 +77,24 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
   };
   
   return (
-    <div className="p-4 space-y-4 bg-gray-50 dark:bg-gray-800">
-      <div className="flex items-center justify-between">
-        <h3 className="font-medium">Workspace Settings</h3>
-        <button
-          onClick={onClose}
-          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Workspace Settings</h3>
+            <button
+              onClick={onClose}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
       
       <div className="space-y-3">
         <div>
@@ -137,21 +159,23 @@ const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = ({ workspace, onClos
         </div>
       </div>
       
-      <div className="flex space-x-2 pt-2">
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !formData.name.trim()}
-          className="btn-primary text-sm flex-1 flex items-center justify-center"
-        >
-          <Save className="w-4 h-4 mr-1" />
-          {isSaving ? 'Saving...' : 'Save'}
-        </button>
-        <button
-          onClick={onClose}
-          className="btn-outline text-sm"
-        >
-          Cancel
-        </button>
+          <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !formData.name.trim()}
+              className="btn-primary flex-1 flex items-center justify-center"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button
+              onClick={onClose}
+              className="btn-outline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
