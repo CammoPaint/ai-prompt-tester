@@ -40,6 +40,8 @@ service cloud.firestore {
       match /customOpenRouterModels/{modelId} {
         // Allow read operations for the owner
         allow read: if isOwner(userId);
+        // Allow list operations for the owner
+        allow list: if isOwner(userId);
         // Allow write operations for the owner
         allow write: if isOwner(userId);
       }
