@@ -137,7 +137,7 @@ export const useAuthStore = create<AuthState>()(
       loadCustomOpenRouterModels: async () => {
         const { user } = get();
         if (!user) return;
-        
+
         try {
           const models = await getCustomOpenRouterModels(user.id);
           set({ customOpenRouterModels: models });
@@ -151,52 +151,6 @@ export const useAuthStore = create<AuthState>()(
             // For other errors, you might want to show a user-friendly message
             set({ error: 'Failed to load custom OpenRouter models. Please check your connection.' });
           }
-        }
-      },
-      
-      addCustomOpenRouterModel: async (name, modelId) => {
-        const { user } = get();
-        if (!user) return;
-        
-        try {
-          const id = await saveCustomOpenRouterModel(user.id, { name, modelId });
-          const newModel = { id, name, modelId };
-          
-          set(state => ({
-            customOpenRouterModels: [...state.customOpenRouterModels, newModel]
-          }));
-        } catch (error) {
-          console.error('Failed to add custom OpenRouter model:', error);
-          throw error;
-        }
-      },
-      
-      removeCustomOpenRouterModel: async (modelId) => {
-        const { user } = get();
-        if (!user) return;
-        
-        try {
-          await deleteCustomOpenRouterModel(user.id, modelId);
-          
-          set(state => ({
-            customOpenRouterModels: state.customOpenRouterModels.filter(model => model.id !== modelId)
-          }));
-        } catch (error) {
-          console.error('Failed to remove custom OpenRouter model:', error);
-          throw error;
-        }
-      },
-      
-      loadCustomOpenRouterModels: async () => {
-        const { user } = get();
-        if (!user) return;
-        
-        try {
-          const models = await getCustomOpenRouterModels(user.id);
-          set({ customOpenRouterModels: models });
-        } catch (error) {
-          console.warn('Failed to load custom OpenRouter models:', error);
-          set({ customOpenRouterModels: [] });
         }
       },
       

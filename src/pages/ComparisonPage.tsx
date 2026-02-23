@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AIResponse, AIProvider, SavedPrompt } from '../types';
-import { sendPrompt, getAvailableModels } from '../services/apiService';
+import { sendPrompt, getAvailableModels, getCombinedOpenRouterModels } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
 import { getProviderColor } from '../utils/theme';
@@ -39,14 +39,14 @@ const ComparisonPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode } = useThemeStore();
-  const { apiKeys } = useAuthStore();
+  const { apiKeys, customOpenRouterModels } = useAuthStore();
   const { currentPrompt } = usePromptStore();
 
   // Check if we're running locally for Ollama availability
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   // Get all available providers with their models
-  const providers: ProviderOption[] = [
+  const providers: ProviderOption[] = useMemo(() => [
     {
       id: 'openai',
       name: 'OpenAI',
@@ -55,7 +55,7 @@ const ComparisonPage: React.FC = () => {
     {
       id: 'openrouter',
       name: 'OpenRouter',
-      models: getAvailableModels('openrouter'),
+      models: getCombinedOpenRouterModels(customOpenRouterModels),
     },
     {
       id: 'perplexity',
@@ -82,7 +82,7 @@ const ComparisonPage: React.FC = () => {
       name: 'Local LLM (Ollama)',
       models: getAvailableModels('ollama'),
     }] : []),
-  ];
+  ], [customOpenRouterModels, isLocalhost]);
 
   const [columns, setColumns] = useState<ComparisonColumn[]>([
     {
@@ -132,12 +132,14 @@ const ComparisonPage: React.FC = () => {
   };
 
   const handleProviderChange = (index: number, provider: AIProvider) => {
-    const providerModels = getAvailableModels(provider);
-    setColumns(prev => prev.map((col, i) => 
-      i === index ? { 
-        ...col, 
-        provider, 
-        model: providerModels[0] || '' 
+    const providerModels = provider === 'openrouter'
+      ? getCombinedOpenRouterModels(customOpenRouterModels)
+      : getAvailableModels(provider);
+    setColumns(prev => prev.map((col, i) =>
+      i === index ? {
+        ...col,
+        provider,
+        model: providerModels[0] || ''
       } : col
     ));
   };
