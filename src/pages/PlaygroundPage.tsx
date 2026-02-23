@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, MessageSquare, Bot } from 'lucide-react';
+import { PlusCircle, MessageSquare, Bot, Loader2 } from 'lucide-react';
 import { sendPrompt } from '../services/apiService';
 import { usePromptStore } from '../store/promptStore';
 import { useAuthStore } from '../store/authStore';
@@ -11,13 +11,14 @@ import ModelSelector from '../components/playground/ModelSelector';
 type TabType = 'prompt' | 'response';
 
 const PlaygroundPage: React.FC = () => {
-  const { 
-    currentPrompt, 
+  const {
+    currentPrompt,
     response,
-    setResponse, 
-    setLoading, 
+    isLoading,
+    setResponse,
+    setLoading,
     setError,
-    resetCurrentPrompt 
+    resetCurrentPrompt
   } = usePromptStore();
   const [activeTab, setActiveTab] = useState<TabType>('prompt');
   const { apiKeys } = useAuthStore();
@@ -131,10 +132,17 @@ const PlaygroundPage: React.FC = () => {
             <div className="flex justify-center mt-6 flex-shrink-0">
               <button
                 onClick={handleSubmitPrompt}
-                disabled={!currentPrompt.userPrompt.trim()}
+                disabled={!currentPrompt.userPrompt.trim() || isLoading}
                 className="btn-primary px-8"
               >
-                Submit
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Processing...
+                  </span>
+                ) : (
+                  'Submit'
+                )}
               </button>
             </div>
           </div>
